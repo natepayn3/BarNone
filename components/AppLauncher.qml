@@ -16,7 +16,7 @@ Scope {
     FontConfig { id: fonts }
 
     // --- STREAMING THEME BRIDGES ---
-    property color themeBackground: Qt.rgba(0.06, 0.06, 0.06, 0.7) 
+    property color themeBackground: Qt.rgba(0.06, 0.06, 0.06, 0.8) 
     property color themeText: "#ffffff"
     property color themeAccent: Qt.rgba(1, 1, 1, 0.15) 
     property color themeBorder: Qt.rgba(1, 1, 1, 0.05)
@@ -34,7 +34,7 @@ Scope {
     PanelWindow {
         id: launcherWindow
         visible: false
-        
+        WlrLayershell.namespace: "quickshell-launcher"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrLayershell.OnDemand
         exclusionMode: ExclusionMode.Ignore 
@@ -320,6 +320,24 @@ Scope {
                                             renderType: fonts.preferredRenderType
                                             antialiasing: fonts.useAntialiasing 
                                         }
+                                    }
+                                    // Spacer block that forces the pin icon to stick to the right edge
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
+
+                                    // Pinned status icon
+                                    Text {
+                                        text: "keep" 
+                                        font.family: fonts.iconFont
+                                        font.pixelSize: 18
+                                        color: launcherModuleRoot.themeText
+                                        visible: appDelegate.isPinned 
+                                        Layout.alignment: Qt.AlignVCenter
+                                        Layout.rightMargin: 4
+
+                                        renderType: fonts.preferredRenderType
+                                        antialiasing: fonts.useAntialiasing
                                     }
                                 } 
 
