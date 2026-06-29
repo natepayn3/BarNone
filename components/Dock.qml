@@ -11,24 +11,27 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell-launcher"
     WlrLayershell.keyboardFocus: WlrLayershell.None
 
-    // Leaving out left and right anchors forces LayerShell to center the window horizontally 
-    // along the bottom edge without stretching it across the entire screen.
     anchors {
         bottom: true
+        left: true
+        right: true
     }
     
-    // Use implicitWidth to fix the deprecation warning and clamp the window footprint strictly to the dock size.
     implicitWidth: visualDock.width + 44
     implicitHeight: 85
     color: "transparent"
     exclusiveZone: 0
 
-    // Direct clickthrough mask binding via native QsWindow property
-    mask: dockHitbox.isPinned ? maskRegion : null
-
-    Region {
-        id: maskRegion
-        item: inputStabilizerCapsule
+    // Native multi-hitbox nesting using the default regions list property
+    mask: Region {
+        // Keeps the bottom edge detection area permanently listening for mouse entry
+        Region {
+            item: hotspotTrigger
+        }
+        // Nesting a secondary conditional region inside the array matrix
+        Region {
+            item: dockHitbox.isPinned ? inputStabilizerCapsule : null
+        }
     }
 
     // --- SYSTEM THEME MATRIX ---
@@ -77,7 +80,6 @@ PanelWindow {
             radius: 14
             anchors.horizontalCenter: parent.horizontalCenter
             
-            // Y transitions inside local window coordinates work flawlessly now because parent width is static
             y: dockHitbox.isPinned ? (parent.height - height - 6) : parent.height
             color: Qt.rgba(0, 0, 0, 0.01) 
 
