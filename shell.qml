@@ -7,50 +7,31 @@ import "components"
 ShellRoot {
     id: shellRoot
 
-    // --- BACKGROUND METRICS WINDOW ---
-    PanelWindow {
-        id: window
-        
-        anchors {
-            right: true
-            bottom: true
-        }
-        
-        implicitWidth: 150
-        implicitHeight: 500
-        color: "transparent"
-        WlrLayershell.layer: WlrLayer.Background
-        exclusionMode: ExclusionMode.Ignore
-
-        // --- VISUAL LAYOUT CONTAINER ---
-        ColumnLayout {
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: 40
-            spacing: 20
-
-            // Modules handle their internal loops, timers, and telemetry streams automatically
-            ResourceRing { ringName: "CPU" }
-            ResourceRing { ringName: "GPU" }
-            ResourceRing { ringName: "RAM" }
-            ResourceRing { ringName: "DISK" }
-        }
-    }
-
     // --- REFACTORED MODULAR COMPONENTS ---
     AppLauncher {
         id: appLauncherModule
     }
 
-    // Changed from WallpaperWindow to match the new file name
+    // Wallpaper configuration interface module
     Wallpaper {
         id: wallpaperWindowModule
         rootShell: shellRoot
     }
 
+    // Primary bottom system dashboard launcher dock
     Dock {
         id: desktopDock
         launcherModule: appLauncherModule
         wallpaperModule: wallpaperWindowModule
+    }
+
+    // Dynamic workspace monitoring panel (Left edge)
+    WorkspaceDock {
+        id: leftWorkspaceDock
+    }
+
+    // Slide-out telemetry metric monitor panel (Right edge)
+    ResourceDock {
+        id: rightResourceDock
     }
 }
