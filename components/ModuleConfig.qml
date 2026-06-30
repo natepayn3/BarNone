@@ -7,6 +7,7 @@ QtObject {
     readonly property color themeBackground: Qt.rgba(0.4, 0.4, 0.4, 0.7)
     readonly property color colorBackground: Qt.rgba(0.4, 0.4, 0.4, 0.28)
     readonly property color colorBorder: Qt.rgba(1, 1, 1, 0.05)
+    readonly property color hoverBorder: Qt.rgba(0, 0, 0, 0.2)
     readonly property color themeBorder: Qt.rgba(0, 0, 0, 0.15)
     readonly property color cardBorder: Qt.rgba(0, 0, 0, 0.2)
     readonly property color themeText: "#ffffff"

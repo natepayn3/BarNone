@@ -27,7 +27,7 @@ PanelWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: dockHitbox.isPinned ? 78 : 16 
+        height: dockHitbox.isPinned ? 78 : 16
     }
 
     mask: Region {
@@ -103,7 +103,7 @@ PanelWindow {
             height: 72
             radius: shellConfig.radiusValue - 2 // Scaled dynamically with theme matrix
             anchors.horizontalCenter: parent.horizontalCenter
-            
+           
             y: dockHitbox.isPinned ? (parent.height - height - 6) : parent.height
             color: Qt.rgba(0, 0, 0, 0.01)
 
@@ -127,7 +127,7 @@ PanelWindow {
                         radius: 12
                         color: dockHitbox.activeHoverIndex === 0 ? dockWindow.themeAccent : "transparent"
                         border.color: dockHitbox.activeHoverIndex === 0 ? dockWindow.hoverBorder : "transparent"
-                        border.width: 1
+                        border.width: 1 // Activated border scale
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
@@ -154,7 +154,7 @@ PanelWindow {
                         radius: 12
                         color: dockHitbox.activeHoverIndex === 1 ? dockWindow.themeAccent : "transparent"
                         border.color: dockHitbox.activeHoverIndex === 1 ? dockWindow.hoverBorder : "transparent"
-                        border.width: 1
+                        border.width: 1 // Activated border scale
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
@@ -181,7 +181,7 @@ PanelWindow {
                         radius: 12
                         color: dockHitbox.activeHoverIndex === 2 ? dockWindow.themeAccent : "transparent"
                         border.color: dockHitbox.activeHoverIndex === 2 ? dockWindow.hoverBorder : "transparent"
-                        border.width: 1
+                        border.width: 1 // Activated border scale
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
@@ -208,7 +208,7 @@ PanelWindow {
                         radius: 12
                         color: dockHitbox.activeHoverIndex === 3 ? dockWindow.themeAccent : "transparent"
                         border.color: dockHitbox.activeHoverIndex === 3 ? dockWindow.hoverBorder : "transparent"
-                        border.width: 1
+                        border.width: 1 // Activated border scale
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
@@ -235,7 +235,7 @@ PanelWindow {
                         radius: 12
                         color: dockHitbox.activeHoverIndex === 4 ? dockWindow.themeAccent : "transparent"
                         border.color: dockHitbox.activeHoverIndex === 4 ? dockWindow.hoverBorder : "transparent"
-                        border.width: 1
+                        border.width: 1 // Activated border scale
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
@@ -262,7 +262,7 @@ PanelWindow {
                         radius: 12
                         color: dockHitbox.activeHoverIndex === 5 ? dockWindow.themeAccent : "transparent"
                         border.color: dockHitbox.activeHoverIndex === 5 ? dockWindow.hoverBorder : "transparent"
-                        border.width: 1
+                        border.width: 1 // Activated border scale
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 

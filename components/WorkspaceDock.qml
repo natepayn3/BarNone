@@ -18,17 +18,19 @@ PanelWindow {
 
     // --- ENGINES & CONFIG LINKAGES ---
     FontConfig { id: fontCfg }
+    ModuleConfig { id: config } // Added configuration module hook
 
     // --- SYSTEM THEME MATRIX & PREVIEW LAYER COMPATIBILITY ---
     property color themeText: "#ffffff"
     property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28)
-    property color hoverBorder: Qt.rgba(0, 0, 0, 0.2)
+    property color hoverBorder: config.hoverBorder // Strictly using config for hoverBorder
     
     readonly property string barPosition: "left"
     property color colorBackground: Qt.rgba(0.06, 0.06, 0.1, 0.95)
     property color colorBorder: Qt.rgba(1, 1, 1, 0.1)
+   
     property color colorAccent: Qt.rgba(0.6, 0.45, 0.9, 1.0)
-    property string shellFont: fontCfg.mainFont
+    property string shellFont: fontCfg.mainFont // Restored original tracking
 
     anchors {
         left: true
@@ -109,6 +111,7 @@ PanelWindow {
             id: hotspotTrigger
             width: 14
             height: parent.height - 16
+          
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             hoverEnabled: true
@@ -136,12 +139,13 @@ PanelWindow {
                 id: visualColumnContainer
                 width: 58
                 height: visualColumn.implicitHeight + 20
-                radius: 12
+                radius: 12 // Restored hardcoded property
+     
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: dockHitbox.isPinned ? 5 : -75
 
-                color: Qt.rgba(0, 0, 0, 0.01) 
+                color: Qt.rgba(0, 0, 0, 0.01)
 
                 Behavior on anchors.leftMargin {
                     NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
@@ -181,29 +185,29 @@ PanelWindow {
 
                             Text {
                                 anchors.centerIn: parent
-                                font.family: fontCfg.iconFont
+                                font.family: fontCfg.iconFont // Restored local FontConfig tracking
                                 font.pixelSize: parent.isActive ? 28 : 22
                                 style: Text.Outline
                                 styleColor: Qt.rgba(0, 0, 0, 0.35)
-                                
+                           
                                 // Dynamic opacity matching the workspace state
                                 color: {
                                     if (!dockHitbox.isPinned) return "transparent";
                                     
                                     let baseColor = sideDockWindow.themeText;
-                                    let alpha = 0.25; // Default: Empty workspace 
+                                    let alpha = 0.25; // Default: Empty workspace
                                     
                                     if (parent.isActive) {
-                                        alpha = 1.0; // Active workspace [cite: 26]
+                                        alpha = 1.0;
                                     } else if (parent.isOccupied) {
-                                        alpha = 0.65; // Occupied workspace 
+                                        alpha = 0.65;
                                     }
                                     
                                     return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, alpha);
                                 }
                                 
                                 text: "counter_" + (wsId % 10)
-                                
+                               
                                 Component.onCompleted: fontCfg.applySmoothing(this)
                                 Behavior on font.pixelSize { NumberAnimation { duration: 140 } }
                                 Behavior on color { ColorAnimation { duration: 180 } }
@@ -230,7 +234,7 @@ PanelWindow {
                         Text {
                             anchors.centerIn: parent
                             text: "add"
-                            font.family: fontCfg.iconFont
+                            font.family: fontCfg.iconFont // Restored local FontConfig tracking
                             font.pixelSize: 22
                             style: Text.Outline
                             styleColor: Qt.rgba(0, 0, 0, 0.35)
@@ -263,7 +267,7 @@ PanelWindow {
 
                         Text {
                             anchors.centerIn: parent
-                            font.family: fontCfg.iconFont
+                            font.family: fontCfg.iconFont // Restored local FontConfig tracking
                             font.pixelSize: sideDockWindow.isSpecialActive ? 28 : 22
                             style: Text.Outline
                             styleColor: Qt.rgba(0, 0, 0, 0.35)
@@ -288,10 +292,8 @@ PanelWindow {
                         let calculatedIndex = Math.floor(mouse.y / totalCellHeight);
                         let localY = mouse.y % totalCellHeight;
                         let totalCount = sideDockWindow.activeWorkspaceList.length + (sideDockWindow.isSpecialOccupied ? 2 : 1);
-                        
                         if (calculatedIndex >= 0 && calculatedIndex < totalCount && localY <= 54 && mouse.y >= 0) {
                             dockHitbox.activeHoverIndex = calculatedIndex;
-                            
                             if (calculatedIndex < sideDockWindow.activeWorkspaceList.length) {
                                 previewWindow.targetWorkspace = sideDockWindow.activeWorkspaceList[calculatedIndex];
                             } else {
@@ -350,7 +352,6 @@ PanelWindow {
             bottom: true
         }
         
-        // Swapped from width to implicitWidth to fix deprecation warning spam
         implicitWidth: previewCard.active ? (68 + previewCard.width + 24) : 0
         color: "transparent"
         visible: targetWorkspace !== -1 && dockHitbox.isPinned
@@ -367,7 +368,7 @@ PanelWindow {
             
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
-            anchors.leftMargin: 72 
+            anchors.leftMargin: 72
 
             onCloseRequested: {
                 previewWindow.targetWorkspace = -1;
