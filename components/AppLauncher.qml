@@ -13,10 +13,9 @@ Scope {
 
     property alias launcherWindowObject: launcherWindow
 
-    FontConfig { id: fonts }
+    FontConfig { id: fc }
 
     // --- REALIGNED SYSTEM THEME MATRIX ---
-    // Swapped out the 90% heavy dark block for the same universal neutral tone used in your docks
     property color themeBackground: Qt.rgba(0.4, 0.4, 0.4, 0.7) 
     property color themeText: "#ffffff"
     property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28) 
@@ -195,8 +194,6 @@ Scope {
                 }
             ]
 
-            // --- VISUAL LAYER SYSTEM ---
-            // Removed border and antialiasing from the source plane to avoid shadow mask bleeding
             Rectangle {
                 id: cardMainBody 
                 anchors.fill: parent
@@ -205,7 +202,6 @@ Scope {
                 visible: false 
             }
 
-            // Universal hardware shadow overlay engine
             MultiEffect {
                 id: cardShadow
                 anchors.fill: cardMainBody
@@ -217,7 +213,6 @@ Scope {
                 shadowHorizontalOffset: 0
             }
 
-            // Independent border overlay rendered safely above the shadow plane
             Rectangle {
                 id: cardBorderOverlay
                 anchors.fill: parent
@@ -247,18 +242,17 @@ Scope {
                             Layout.preferredHeight: 46 
                             placeholderText: "Search apps..."
                             
-                            font.family: fonts.mainFont
+                            font.family: fc.mainFont
                             font.pixelSize: 20 
-                            renderType: fonts.preferredRenderType
-                            antialiasing: fonts.useAntialiasing
-                            
                             color: launcherModuleRoot.themeText
                             placeholderTextColor: Qt.rgba(1, 1, 1, 0.3)
                             selectByMouse: true
                             verticalAlignment: TextInput.AlignVCenter 
                             
+                            Component.onCompleted: fc.applySmoothing(this)
+
                             background: Rectangle { 
-                                color: Qt.rgba(0, 0, 0, 0.15) // Down-tints input matrix box cleanly
+                                color: Qt.rgba(0, 0, 0, 0.15) 
                                 border.color: searchInput.activeFocus ? launcherModuleRoot.themeAccent : launcherModuleRoot.themeBorder 
                                 border.width: 1
                                 radius: 10 
@@ -268,7 +262,7 @@ Scope {
 
                             Keys.onPressed: (event) => {
                                 if (event.key === Qt.Key_Down) {
-                                    appListView.incrementCurrentIndex(); 
+                                    appListView.incrementCurrentIndex();
                                     event.accepted = true;
                                 } else if (event.key === Qt.Key_Up) {
                                     appListView.decrementCurrentIndex();
@@ -306,7 +300,6 @@ Scope {
                                     property bool isPinned: launcherWindow.localPins.includes(modelData.path)
 
                                     background: Rectangle { 
-                                        // Matched completely to dock module background design structures
                                         color: appDelegate.highlighted
                                             ? launcherModuleRoot.themeAccent 
                                             : (appDelegate.hovered ? Qt.rgba(1, 1, 1, 0.05) : "transparent")
@@ -337,29 +330,29 @@ Scope {
 
                                             Text { 
                                                 text: modelData.name
-                                                font.family: fonts.mainFont 
+                                                font.family: fc.mainFont 
                                                 font.pixelSize: 16
-                                                style: Text.Outline
-                                                styleColor: Qt.rgba(0, 0, 0, 0.45) // Outline shield locks readable contrast over pure white apps
                                                 color: launcherModuleRoot.themeText 
                                                 font.weight: appDelegate.isPinned ? Font.Bold : Font.Normal 
                                                 Layout.fillWidth: true
                                                 elide: Text.ElideRight
-                                                renderType: fonts.preferredRenderType 
-                                                antialiasing: fonts.useAntialiasing 
+                                                
+                                                Component.onCompleted: {
+                                                    fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.45))
+                                                }
                                             }
 
                                             Text {
                                                 text: modelData.desc !== "" ? modelData.desc : "Application" 
-                                                font.family: fonts.mainFont
+                                                font.family: fc.mainFont
                                                 font.pixelSize: 14
-                                                style: Text.Outline
-                                                styleColor: Qt.rgba(0, 0, 0, 0.3)
                                                 color: Qt.rgba(1, 1, 1, 0.5) 
                                                 Layout.fillWidth: true
-                                                elide: Text.ElideRight 
-                                                renderType: fonts.preferredRenderType
-                                                antialiasing: fonts.useAntialiasing 
+                                                elide: Text.ElideRight
+                                              
+                                                Component.onCompleted: {
+                                                    fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.3))
+                                                }
                                             }
                                         }
 
@@ -369,16 +362,16 @@ Scope {
 
                                         Text {
                                             text: "keep" 
-                                            font.family: fonts.iconFont
+                                            font.family: fc.iconFont
                                             font.pixelSize: 18
-                                            style: Text.Outline
-                                            styleColor: Qt.rgba(0, 0, 0, 0.4)
                                             color: launcherModuleRoot.themeText
                                             visible: appDelegate.isPinned 
                                             Layout.alignment: Qt.AlignVCenter
                                             Layout.rightMargin: 4
-                                            renderType: fonts.preferredRenderType
-                                            antialiasing: fonts.useAntialiasing
+                                         
+                                            Component.onCompleted: {
+                                                fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.4))
+                                            }
                                         }
                                     } 
 
