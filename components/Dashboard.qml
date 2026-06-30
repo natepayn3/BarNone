@@ -3,11 +3,12 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Services.Notifications
 
 PanelWindow {
     id: dashboardWindow
 
-    property var notificationModel: []
+    property var notificationModel: notifServer.trackedNotifications
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-resource-dashboard"
@@ -22,6 +23,20 @@ PanelWindow {
 
     implicitWidth: 360
     color: "transparent"
+
+    // --- CORE NOTIFICATION SERVER ENGINE ---
+    NotificationServer {
+        id: notifServer
+        bodySupported: true
+        actionsSupported: true
+        imageSupported: true
+        persistenceSupported: true
+        
+        // 🎯 FIX: Intercept incoming notifications and mark them to be tracked
+        onNotification: (notif) => {
+            notif.tracked = true;
+        }
+    }
 
     mask: Region {
         Region { item: hotspotTrigger }
@@ -69,8 +84,6 @@ PanelWindow {
             border.width: 0
             radius: 16
 
-            // Using a HoverHandler directly on the container tracks mouse positioning safely 
-            // without creating a hit-mask block over interactive inner buttons
             HoverHandler {
                 id: cardHover
             }
@@ -78,38 +91,26 @@ PanelWindow {
             ScrollView {
                 id: dashScroll
                 anchors.fill: parent
-                // Ensures healthy padding buffers around your modules
                 anchors.margins: 24
                 clip: true
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
                 ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
-                // Standard Column enforces strict, consistent horizontal alignment bounds
                 Column {
                     id: mainContentColumn
                     width: dashScroll.availableWidth
                     spacing: 24
 
                     Clock { width: parent.width }
-
                     Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
-
                     Weather { width: parent.width }
-
                     Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
-
                     ResourceRings { width: parent.width }
-
                     Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
-
                     VolumeSlider { width: parent.width }
-
                     Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
-
                     Media { width: parent.width }
-
                     Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
-
                     Notifications { width: parent.width }
                 }
             }

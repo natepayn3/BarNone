@@ -13,8 +13,6 @@ PanelWindow {
 
     anchors {
         bottom: true
-        left: true
-        right: true
     }
     
     implicitWidth: visualDock.width + 44
@@ -27,7 +25,8 @@ PanelWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: 120 
+        // Track the current visual height + padding instead of a hardcoded value
+        height: dockHitbox.isPinned ? 78 : 16 
     }
 
     mask: Region {
