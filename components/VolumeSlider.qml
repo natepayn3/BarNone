@@ -14,7 +14,7 @@ Item {
 
     FontConfig { id: fc }
 
-    // --- 1. BACKGROUND TRACK (The empty part) ---
+    // --- 1. BACKGROUND MASTER TRACK CONTAINER ---
     Rectangle {
         id: bgTrack
         anchors.fill: parent
@@ -22,6 +22,9 @@ Item {
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.03)
         radius: height / 2
+        
+        // Enforce master clipping bounds so the slider fill can never escape or deform
+        clip: true
 
         // LIGHT TEXT: Sits stationary underneath the fill bar
         Text {
@@ -36,69 +39,76 @@ Item {
                 fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
             }
         }
-    }
 
-    // --- 2. FILL BAR (The colored part that clips) ---
-    Rectangle {
-        id: fillBar
-        height: parent.height
-        width: volumeSliderRoot.width * volumeSliderRoot.currentVolume
-        color: "#ffffff"
-        radius: height / 2
-        
-        // 🎯 THE CLIPPING MAGIC
-        clip: true 
+        // --- 2. FILL BAR (Nested cleanly inside the background container) ---
+        Rectangle {
+            id: fillBar
+            height: parent.height
+            
+            // Map the width dynamically so 0% volume sits exactly at the height (48px circle)
+            width: parent.height + ((parent.width - parent.height) * volumeSliderRoot.currentVolume)
+            color: "#ffffff"
+            radius: height / 2
+            
+            // Keep it hard-pinned to the left edge of the container at all times
+            anchors.left: parent.left
+            anchors.leftMargin: 0
+            
+            // Permanent visibility: Keep it solid even at 0% to prevent the circle from disappearing
+            opacity: 1.0
+            clip: true 
 
-        // DARK TEXT: Absolutely positioned relative to the root frame size
-        Text {
-            x: (volumeSliderRoot.width - width) / 2
-            y: (volumeSliderRoot.height - height) / 2
-            
-            text: volumeSliderRoot.percentageText
-            color: Qt.rgba(0, 0, 0, 0.85)
-            font.family: fc.mainFont
-            font.pixelSize: 13
-            font.weight: Font.Bold
-            
-            Component.onCompleted: {
-                fc.applySmoothing(this)
+            // DARK TEXT: Fixed relative layout calculation matching the absolute track size
+            Text {
+                x: (volumeSliderRoot.width - width) / 2 - fillBar.anchors.leftMargin
+                y: (volumeSliderRoot.height - height) / 2
+                
+                text: volumeSliderRoot.percentageText
+                color: Qt.rgba(0, 0, 0, 0.85)
+                font.family: fc.mainFont
+                font.pixelSize: 13
+                font.weight: Font.Bold
+                
+                Component.onCompleted: {
+                    fc.applySmoothing(this)
+                }
             }
         }
-    }
 
-    // --- 3. DUAL-RENDERED SYSTEM ICONS ---
-    // Background Icon (White/Dimmed when unfilled)
-    Text {
-        id: bgIcon
-        text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
-        font.family: fc.iconFont
-        font.pixelSize: 18
-        color: Qt.rgba(1, 1, 1, 0.4)
-        anchors.left: parent.left
-        anchors.leftMargin: 16
-        anchors.verticalCenter: parent.verticalCenter
-        
-        Component.onCompleted: {
-            fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
-        }
-    }
-
-    // Foreground Icon (Dark overlay clipped right inside the moving bar)
-    Item {
-        height: parent.height
-        width: fillBar.width
-        clip: true
-
+        // --- 3. DUAL-RENDERED SYSTEM ICONS (Also nested inside the master mask) ---
+        // Background Icon (White/Dimmed when unfilled)
         Text {
+            id: bgIcon
             text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
             font.family: fc.iconFont
             font.pixelSize: 18
-            color: Qt.rgba(0, 0, 0, 0.75)
-            x: 16
+            color: Qt.rgba(1, 1, 1, 0.4)
+            anchors.left: parent.left
+            anchors.leftMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             
             Component.onCompleted: {
-                fc.applySmoothing(this)
+                fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+            }
+        }
+
+        // Foreground Icon (Dark overlay clipped right inside the moving bar)
+        Item {
+            height: parent.height
+            width: fillBar.width
+            clip: true
+
+            Text {
+                text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
+                font.family: fc.iconFont
+                font.pixelSize: 18
+                color: Qt.rgba(0, 0, 0, 0.75)
+                x: 16
+                anchors.verticalCenter: parent.verticalCenter
+                
+                Component.onCompleted: {
+                    fc.applySmoothing(this)
+                }
             }
         }
     }
@@ -109,7 +119,11 @@ Item {
         anchors.fill: parent
 
         function updateVolume(mouseX) {
-            let newPct = Math.max(0.0, Math.min(1.0, mouseX / width));
+            let trackWidth = width - height;
+            // Clamp the mouse registration strictly to the center coordinates of our circular boundary
+            let adjustedX = mouseX - (height / 2);
+            let newPct = Math.max(0.0, Math.min(1.0, adjustedX / trackWidth));
+            
             volumeSliderRoot.currentVolume = newPct;
             volSetter.command = ["sh", "-c", "wpctl set-volume @DEFAULT_AUDIO_SINK@ " + newPct.toFixed(2)];
             volSetter.running = true;

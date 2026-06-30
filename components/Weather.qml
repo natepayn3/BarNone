@@ -24,7 +24,7 @@ Column {
     Text {
         text: weatherRoot.weatherGlyph
         font.family: fc.iconFont
-        font.pixelSize: 38
+        font.pixelSize: 60
         color: "#ffffff"
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
@@ -49,7 +49,20 @@ Column {
     }
 
     Text {
-        text: weatherRoot.weatherDesc + "  •  Feels " + weatherRoot.weatherFeelsLike
+        text: weatherRoot.weatherDesc
+        font.family: fc.mainFont
+        font.weight: Font.Bold
+        font.pixelSize: 12
+        color: Qt.rgba(1, 1, 1, 0.5)
+        width: parent.width
+        horizontalAlignment: Text.AlignHCenter
+        
+        Component.onCompleted: {
+            fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+        }
+    }
+    Text {
+        text: "Feels like " + weatherRoot.weatherFeelsLike
         font.family: fc.mainFont
         font.pixelSize: 12
         color: Qt.rgba(1, 1, 1, 0.5)

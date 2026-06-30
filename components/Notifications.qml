@@ -76,19 +76,24 @@ Rectangle {
         // --- CONSTRAINED NOTIFICATION LIST ENGINE ---
         ListView {
             id: notifList
-            Layout.fillWidth: true // Required for ColumnLayout children
-            // Explicitly map preferred/implicit height for the Layout engine
-            Layout.preferredHeight: Math.min(135, notifList.count * 54)
+            Layout.fillWidth: true 
+            
+            // Limit the maximum display height of the list container (e.g., max 400px)
+            Layout.preferredHeight: Math.min(400, contentHeight)
             height: Layout.preferredHeight 
+            
             spacing: 6
             clip: true
-            interactive: count > 2
+            
+            // Enable dragging/flicking only when content exceeds the max boundary
+            interactive: contentHeight > height
 
             model: dashboardWindow.notificationModel
             
             ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AlwaysOff }
             ScrollBar.vertical: ScrollBar { 
-                policy: notifList.count > 2 ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff 
+                // Display the scrollbar automatically when the list is scrollable
+                policy: notifList.interactive ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff 
             }
 
             displaced: Transition { 
@@ -100,7 +105,7 @@ Rectangle {
                 required property var modelData
 
                 width: notifList.width 
-                height: 48 
+                height: delegateLayout.implicitHeight + 20 
                 radius: 8
                 color: Qt.rgba(1, 1, 1, 0.05)
 
@@ -126,21 +131,22 @@ Rectangle {
                     }
                 }
 
-                Column {
+                ColumnLayout {
+                    id: delegateLayout
                     anchors.left: parent.left
                     anchors.right: closeBtn.left
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.top: parent.top
                     anchors.margins: 10
-                    spacing: 0
+                    spacing: 2
 
                     Text { 
                         text: modelData.summary
                         color: "#ffffff"
                         font.family: fc.mainFont
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                        elide: Text.ElideRight
-                        width: parent.width
+                        font.pixelSize: 14
+                        font.weight: Font.DemiBold
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
 
                         Component.onCompleted: {
                             fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
@@ -151,9 +157,9 @@ Rectangle {
                         text: modelData.body
                         color: Qt.rgba(1, 1, 1, 0.5)
                         font.family: fc.mainFont
-                        font.pixelSize: 10
-                        elide: Text.ElideRight
-                        width: parent.width
+                        font.pixelSize: 13
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
 
                         Component.onCompleted: {
                             fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))

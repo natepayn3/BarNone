@@ -26,6 +26,7 @@ PanelWindow {
 
     NotificationServer {
         id: notifServer
+ 
         bodySupported: true
         actionsSupported: true
         imageSupported: true
@@ -69,8 +70,8 @@ PanelWindow {
         Rectangle {
             id: bgCard
             width: 360
-            // Dynamic height combining the highest column and the wide footer tray below it
-            height: Math.max(leftColumn.implicitHeight, rightColumn.implicitHeight) + notifWrapper.implicitHeight + 68
+            // Dynamic height accounting for both full-width sections (media + notification trays)
+            height: Math.max(leftColumn.implicitHeight, rightColumn.implicitHeight) + mediaWrapper.implicitHeight + notifWrapper.implicitHeight + 88
             anchors.verticalCenter: parent.verticalCenter
             
             x: dashHitbox.isPinned ? (parent.width - width - 16) : parent.width
@@ -90,7 +91,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 24
 
-                // LEFT PANEL COLUMN (Clock, Weather, Sliders)
+                // LEFT PANEL COLUMN (Clock, Weather + Calendar, Volume)
                 Column {
                     id: leftColumn
                     anchors.top: parent.top
@@ -110,19 +111,32 @@ PanelWindow {
                         }
                     }
                     
-                    Weather { 
+                    RowLayout {
                         width: parent.width
-                        Component.onCompleted: {
-                            for (let i = 0; i < children.length; i++) {
-                                if (children[i].horizontalAlignment !== undefined) {
-                                    children[i].horizontalAlignment = Text.AlignHCenter;
+                        spacing: 12
+
+                        Weather { 
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 40 
+                            Layout.alignment: Qt.AlignTop
+                            
+                            Component.onCompleted: {
+                                for (let i = 0; i < children.length; i++) {
+                                    if (children[i].horizontalAlignment !== undefined) {
+                                        children[i].horizontalAlignment = Text.AlignHCenter;
+                                    }
                                 }
                             }
+                        }
+
+                        DashCalendar {
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 60 
+                            Layout.alignment: Qt.AlignTop
                         }
                     }
                     
                     VolumeSlider { width: parent.width }
-                    Media { width: parent.width }
                 }
 
                 // RIGHT PANEL COLUMN (Resource Rings)
@@ -137,14 +151,29 @@ PanelWindow {
                     }
                 }
 
-                // 🎯 FULL-WIDTH NOTIFICATION TRAY (Spans all the way from left edge to right edge)
+                // 🎯 FULL-WIDTH MEDIA TRAY 
+                Item {
+                    id: mediaWrapper
+                    // Sits directly below the tallest column asset
+                    anchors.top: leftColumn.implicitHeight > rightColumn.implicitHeight ? leftColumn.bottom : rightColumn.bottom
+                    anchors.topMargin: 20
+                    anchors.left: parent.left
+                    anchors.right: parent.right 
+                    implicitHeight: childrenRect.height
+
+                    Media { 
+                        width: parent.width 
+                    }
+                }
+
+                // 🎯 FULL-WIDTH NOTIFICATION TRAY
                 Item {
                     id: notifWrapper
-                    // Aligns below whichever column ends up being taller
-                    anchors.top: leftColumn.implicitHeight > rightColumn.implicitHeight ? leftColumn.bottom : rightColumn.bottom
+                    // Stacks cleanly underneath the newly broken-out media tray
+                    anchors.top: mediaWrapper.bottom
                     anchors.topMargin: 24
                     anchors.left: parent.left
-                    anchors.right: parent.right // 🎯 Stretches across the full dashboard width
+                    anchors.right: parent.right 
                     implicitHeight: childrenRect.height
 
                     Notifications { 
