@@ -2,41 +2,77 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Services.Notifications
 import "components"
 
 ShellRoot {
     id: shellRoot
     
     property bool audioPopupActive: false
+    property var activeNotifications: []
 
-    // --- REFACTORED MODULAR COMPONENTS ---
-    AppLauncher {
-        id: appLauncherModule
+    // 🎯 The secure pipeline object that bridges the window gap
+    QtObject {
+        id: notifBroadcaster
+        signal broadcast(string summary, string body)
     }
 
-    // Wallpaper configuration interface module
-    Wallpaper {
-        id: wallpaperWindowModule
-        rootShell: shellRoot
+    AppLauncher { id: appLauncherModule }
+    Wallpaper { id: wallpaperWindowModule; rootShell: shellRoot }
+
+    NotificationServer {
+        id: notifServer
+        bodySupported: true
+        actionsSupported: false
+        
+        onNotification: (notification) => {
+            // Send pure strings down the pipe to avoid garbage collection drops
+            notifBroadcaster.broadcast(notification.summary, notification.body);
+        }
     }
 
-    // Primary bottom system dashboard launcher dock
-    Dock {
-        id: desktopDock
-        launcherModule: appLauncherModule
-        wallpaperModule: wallpaperWindowModule
+    // --- MONITOR REPEATERS ---
+    Variants {
+        model: Quickshell.screens
+        Dock {
+            required property var modelData
+            screen: modelData
+            launcherModule: appLauncherModule
+            wallpaperModule: wallpaperWindowModule
+        }
     }
 
-    // Dynamic workspace monitoring panel (Left edge)
-    WorkspaceDock {
-        id: leftWorkspaceDock
+    Variants {
+        model: Quickshell.screens
+        WorkspaceDock {
+            required property var modelData
+            screen: modelData
+        }
     }
 
-    // Slide-out telemetry metric monitor panel (Right edge)
-    ResourceDock {
-        id: rightResourceDock
+    Variants {
+        model: Quickshell.screens
+        Dashboard {
+            required property var modelData
+            screen: modelData
+            notificationModel: shellRoot.activeNotifications
+        }
     }
-    VolumeOsd {
-        id: hardwareVolumePill
+
+    Variants {
+        model: Quickshell.screens
+        VolumeOsd {
+            required property var modelData
+            screen: modelData
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+        NotificationOsd {
+            required property var modelData
+            screen: modelData
+            broadcaster: notifBroadcaster
+        }
     }
 }
