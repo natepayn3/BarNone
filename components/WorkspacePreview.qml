@@ -32,7 +32,8 @@ Item {
     property color colorAccent: Qt.rgba(0.6, 0.45, 0.9, 1.0)
     property string shellFont: "Google Sans Flex"
 
-    property real maxCardWidth: viewportFrame.width + 28
+    // Dynamically expand root width to tightly match the workspace stream aspect bounds plus side paddings
+    property real maxCardWidth: viewportFrame.width + 68
     property real maxCardHeight: viewportFrame.calculatedBounds.isVertical ? 500 : 270
 
     implicitWidth: Math.round(maxCardWidth)
@@ -128,7 +129,6 @@ Item {
         opacity: previewRoot.active ? 1.0 : 0.0
         x: previewRoot.active ? 0 : -50
         
-        // Ensure the visual elements stay fully unmapped only after the exit translation completes
         visible: previewRoot.active || exitXAnimation.running || opacity > 0.01
 
         Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -146,6 +146,23 @@ Item {
             radius: previewRoot.radiusValue
         }
 
+        // --- TV ANTENNA ICON ---
+        Text {
+            id: antennaIcon
+            text: "network_ping"
+            font {
+                family: "Material Symbols Outlined"
+                pixelSize: 80
+            }
+            color: previewRoot.colorBackground
+            //style: Text.Outline
+            styleColor: colorBackground
+            z: 3
+            anchors.bottom: cardMainBody.top
+            anchors.horizontalCenter: cardMainBody.horizontalCenter
+            anchors.bottomMargin: -28
+        }
+
         Item {
             id: borderClippingMask
             anchors.fill: parent
@@ -155,12 +172,10 @@ Item {
             Rectangle {
                 id: borderFrame
                 anchors.fill: parent
-                
                 anchors.leftMargin: -2
                 anchors.topMargin: 0
                 anchors.rightMargin: 0
                 anchors.bottomMargin: 0
-
                 color: "transparent"
                 border.color: previewRoot.colorBorder
                 border.width: 0
@@ -199,13 +214,60 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 14
 
+                // --- TV KNOBS (INSIDE WINDOW, LEFT SIDE) ---
+                Column {
+                    id: tvKnobsColumn
+                    anchors.left: parent.left
+                    anchors.leftMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 24
+                    spacing: 16
+
+                    Text {
+                        text: "menu"
+                        font {
+                            family: "Material Symbols Outlined"
+                            pixelSize: 30
+                        }
+                        color: Qt.rgba(1, 1, 1, 0.4)
+                        style: Text.Outline
+                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+
+                    Text {
+                        text: "clock_loader_10"
+                        font {
+                            family: "Material Symbols Outlined"
+                            pixelSize: 30
+                        }
+                        color: Qt.rgba(1, 1, 1, 0.4)
+                        style: Text.Outline
+                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+
+                    Text {
+                        text: "clock_loader_40"
+                        font {
+                            family: "Material Symbols Outlined"
+                            pixelSize: 30
+                        }
+                        color: Qt.rgba(1, 1, 1, 0.4)
+                        style: Text.Outline
+                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+
                 Row {
                     id: headerRow
-                    width: parent.width
+                    width: parent.width - tvKnobsColumn.width - 16
                     height: 20
                     spacing: 16
                     anchors.top: parent.top
-                    anchors.left: parent.left
+                    anchors.left: tvKnobsColumn.right
+                    anchors.leftMargin: 16
 
                     Text {
                         id: titleLabel
@@ -241,20 +303,26 @@ Item {
 
                 Rectangle {
                     id: headerDivider
-                    width: parent.width - 4; height: 1
+                    width: parent.width - tvKnobsColumn.width - 16
+                    height: 1
                     color: previewRoot.colorBorder
                     anchors.top: headerRow.bottom
                     anchors.topMargin: 4
-                    x: 0
+                    anchors.left: tvKnobsColumn.right
+                    anchors.leftMargin: 16
                 }
 
                 Rectangle {
                     id: viewportFrame
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: headerDivider.bottom; anchors.topMargin: 8
-                    anchors.bottom: parent.bottom; anchors.bottomMargin: 2
+                    anchors.left: tvKnobsColumn.right
+                    anchors.leftMargin: 16
+                    anchors.top: headerDivider.bottom
+                    anchors.topMargin: 8
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 2
                     color: "transparent" 
-                    radius: 4; clip: true
+                    radius: 4
+                    clip: true
 
                     property var workspaceWindows: previewRoot.liveClientJson.filter(w => w.workspace.id === previewRoot.workingWorkspace)
                     property bool isTargetActiveWorkspace: !!(Hyprland.activeWorkspace && (previewRoot.workingWorkspace === Hyprland.activeWorkspace.id))
@@ -270,7 +338,6 @@ Item {
                                 mHeight = Math.round(targetMonitor.height / scale);
                                 mX = targetMonitor.x;
                                 mY = targetMonitor.y;
-                                
                                 let barThickness = 44;
                                 mX += barThickness; 
                                 mWidth -= barThickness;
@@ -317,7 +384,9 @@ Item {
                             
                             color: viewportFrame.isTargetActiveWorkspace ? Qt.rgba(previewRoot.colorAccent.r, previewRoot.colorAccent.g, previewRoot.colorAccent.b, 0.15) : Qt.rgba(0, 0, 0, 0.6)
                             border.color: viewportFrame.isTargetActiveWorkspace ? previewRoot.colorAccent : previewRoot.colorBorder
-                            border.width: 0; radius: 2; clip: true
+                            border.width: 0
+                            radius: 2
+                            clip: true
 
                             property var wlToplevel: {
                                 if (!modelData || !modelData.address) return null;
@@ -361,13 +430,16 @@ Item {
                                 anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
                                 height: Math.min(14, parent.height * 0.25)
                                 color: viewportFrame.isTargetActiveWorkspace ? previewRoot.colorAccent : "#cc11111b"
-                                visible: parent.height > 20 && parent.width > 35; z: 10
+                                visible: parent.height > 20 && parent.width > 35
+                                z: 10
 
                                 Text {
                                     text: (modelData.title && modelData.title.trim() !== "" && modelData.title !== "~") ? modelData.title : (modelData.class || "")
-                                    font.family: previewRoot.shellFont; font.pixelSize: 8; font.bold: true; 
+                                    font.family: previewRoot.shellFont
+                                    font.pixelSize: 8; font.bold: true 
                                     color: viewportFrame.isTargetActiveWorkspace ? previewRoot.colorBackground : "#ffffff"
-                                    anchors.centerIn: parent; width: parent.width - 4; elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
+                                    anchors.centerIn: parent
+                                    width: parent.width - 4; elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
                                 }
                             }
                         }
