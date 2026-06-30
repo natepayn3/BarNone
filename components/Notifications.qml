@@ -34,11 +34,17 @@ Column {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
+                
                 onClicked: {
-                    for (let i = notifList.count - 1; i >= 0; i--) {
-                        let item = notifList.itemAtIndex(i);
-                        if (item && item.modelData) {
-                            item.modelData.dismiss();
+                    // Extract the raw backend array data directly from the bound model cache
+                    let notifArray = notifList.model;
+                    if (notifArray) {
+                        // Loop backwards through the actual data objects rather than visual children
+                        for (let i = notifArray.length - 1; i >= 0; i--) {
+                            let notif = notifArray[i];
+                            if (notif) {
+                                notif.dismiss();
+                            }
                         }
                     }
                 }
