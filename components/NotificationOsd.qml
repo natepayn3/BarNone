@@ -106,9 +106,9 @@ PanelWindow {
                         Text {
                             id: iconText
                             anchors.centerIn: parent
-                            text: "notifications"
+                            text: "notifications_unread"
                             font.family: fc.iconFont
-                            font.pixelSize: 16
+                            font.pixelSize: 25
                             color: "#ffffff"
                             Component.onCompleted: fc.applySmoothing(this)
                         }
@@ -124,7 +124,7 @@ PanelWindow {
                             text: model.summary
                             color: "#ffffff"
                             font.family: fc.mainFont
-                            font.pixelSize: 12
+                            font.pixelSize: 15
                             font.weight: Font.Bold
                             elide: Text.ElideRight
                             Layout.fillWidth: true
@@ -136,7 +136,7 @@ PanelWindow {
                             text: model.body
                             color: Qt.rgba(1, 1, 1, 0.5)
                             font.family: fc.mainFont
-                            font.pixelSize: 10
+                            font.pixelSize: 15
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                             Component.onCompleted: fc.applySmoothing(this)
