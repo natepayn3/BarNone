@@ -20,12 +20,13 @@ PanelWindow {
     color: "transparent"
     exclusiveZone: 0
 
+    FontConfig { id: fc }
+
     Item {
         id: staticMaskSurface
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        // Track the current visual height + padding instead of a hardcoded value
         height: dockHitbox.isPinned ? 78 : 16 
     }
 
@@ -40,7 +41,6 @@ PanelWindow {
     property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28)
     property color hoverBorder: Qt.rgba(0, 0, 0, 0.2)
 
-    // Overlaid control panel component handles
     BluetoothPopup {
         id: bluetoothOverlay
         visible: false
@@ -69,7 +69,6 @@ PanelWindow {
         onStableHoverChanged: {
             if (stableHover) {
                 dismissTimer.stop();
-                
                 if (dockWindow.wallpaperModule && dockWindow.wallpaperModule.active) {
                     if (dockWindow.wallpaperModule.screen === dockWindow.screen) {
                         isPinned = true;
@@ -99,7 +98,7 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             
             y: dockHitbox.isPinned ? (parent.height - height - 6) : parent.height
-            color: Qt.rgba(0, 0, 0, 0.01) 
+            color: Qt.rgba(0, 0, 0, 0.01)
 
             Behavior on y {
                 NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
@@ -128,12 +127,14 @@ PanelWindow {
                     Text {
                         anchors.centerIn: parent
                         text: "apps"
-                        font.family: "Material Symbols Outlined"
+                        font.family: fc.iconFont
                         font.pixelSize: 32
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
+                        
+                        Component.onCompleted: {
+                            fc.applyOutline(this)
+                        }
                     }
                 }
 
@@ -155,12 +156,14 @@ PanelWindow {
                     Text {
                         anchors.centerIn: parent
                         text: "wallpaper"
-                        font.family: "Material Symbols Outlined"
+                        font.family: fc.iconFont
                         font.pixelSize: 32
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
+                        
+                        Component.onCompleted: {
+                            fc.applyOutline(this)
+                        }
                     }
                 }
 
@@ -182,12 +185,14 @@ PanelWindow {
                     Text {
                         anchors.centerIn: parent
                         text: "bluetooth"
-                        font.family: "Material Symbols Outlined"
+                        font.family: fc.iconFont
                         font.pixelSize: 32
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
+                        
+                        Component.onCompleted: {
+                            fc.applyOutline(this)
+                        }
                     }
                 }
 
@@ -209,12 +214,14 @@ PanelWindow {
                     Text {
                         anchors.centerIn: parent
                         text: "volume_up"
-                        font.family: "Material Symbols Outlined"
+                        font.family: fc.iconFont
                         font.pixelSize: 32
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
+                        
+                        Component.onCompleted: {
+                            fc.applyOutline(this)
+                        }
                     }
                 }
 
@@ -236,12 +243,14 @@ PanelWindow {
                     Text {
                         anchors.centerIn: parent
                         text: "screenshot_region"
-                        font.family: "Material Symbols Outlined"
+                        font.family: fc.iconFont
                         font.pixelSize: 32
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
+                        
+                        Component.onCompleted: {
+                            fc.applyOutline(this)
+                        }
                     }
                 }
             }
@@ -254,10 +263,9 @@ PanelWindow {
 
                 onPositionChanged: (mouse) => {
                     let adjustedX = mouse.x - 12;
-                    let totalCellWidth = 80; 
+                    let totalCellWidth = 80;
                     let calculatedIndex = Math.floor(adjustedX / totalCellWidth);
                     let localX = adjustedX % totalCellWidth;
-                    
                     if (calculatedIndex >= 0 && calculatedIndex <= 4 && localX <= 64 && adjustedX >= 0) {
                         dockHitbox.activeHoverIndex = calculatedIndex;
                     } else {
@@ -289,7 +297,7 @@ PanelWindow {
 
     Timer {
         id: dismissTimer
-        interval: 500 
+        interval: 500
         running: false
         repeat: false
         onTriggered: {
