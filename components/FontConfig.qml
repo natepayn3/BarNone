@@ -9,14 +9,23 @@ QtObject {
     property string iconFont: "Material Symbols Outlined"
 
     // --- ENHANCED SMOOTHING INJECTOR ---
-    // Passes system FreeType rendering profiles directly to components
     property int preferredRenderType: Text.NativeRendering
     property bool useAntialiasing: true
 
     // --- HELPER FACTORIES ---
-    // Safely constructs localized styling attributes if needed
     function applySmoothing(targetTextElement) {
         if (targetTextElement) {
+            targetTextElement.renderType = preferredRenderType;
+            targetTextElement.antialiasing = useAntialiasing;
+        }
+    }
+
+    // GLOBAL TEXT OUTLINE INJECTOR
+    function applyOutline(targetTextElement, outlineColor) {
+        if (targetTextElement) {
+            targetTextElement.style = Text.Outline;
+            // 🎯 Matches your preferred soft 0.35 alpha opacity look by default
+            targetTextElement.styleColor = outlineColor !== undefined ? outlineColor : Qt.rgba(0, 0, 0, 0.35);
             targetTextElement.renderType = preferredRenderType;
             targetTextElement.antialiasing = useAntialiasing;
         }

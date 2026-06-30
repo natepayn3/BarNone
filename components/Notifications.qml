@@ -5,13 +5,14 @@ import QtQuick.Controls
 Rectangle {
     id: notifRootCard
     width: parent ? parent.width : 0
-    // Dynamic height calculation handles the layout flow size nicely
     height: notifList.count === 0 ? 64 : (notifColumnLayout.childrenRect.height + 24)
     radius: 12
     
     color: Qt.rgba(1, 1, 1, 0.04) 
     border.width: 1
     border.color: Qt.rgba(1, 1, 1, 0.03)
+
+    FontConfig { id: fc }
 
     Column {
         id: notifColumnLayout
@@ -29,20 +30,28 @@ Rectangle {
             Text {
                 text: "Notifications"
                 color: "#ffffff"
-                font.family: "Google Sans Flex"
+                font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
                 Layout.fillWidth: true
+
+                Component.onCompleted: {
+                    fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                }
             }
 
             Text {
                 id: clearBtnText
                 text: "Clear all"
-                font.family: "Google Sans Flex"
+                font.family: fc.mainFont
                 font.pixelSize: 12
                 font.weight: Font.Bold
                 color: clearMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.9) : Qt.rgba(1, 1, 1, 0.4)
                 
+                Component.onCompleted: {
+                    fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                }
+
                 MouseArea {
                     id: clearMouse
                     anchors.fill: parent
@@ -96,7 +105,7 @@ Rectangle {
                 Text {
                     id: closeBtn
                     text: "close"
-                    font.family: "Material Symbols Outlined"
+                    font.family: fc.iconFont
                     font.pixelSize: 14
                     color: "#ffffff"
                     opacity: 0.5
@@ -104,6 +113,10 @@ Rectangle {
                     anchors.top: parent.top
                     anchors.margins: 10
                  
+                    Component.onCompleted: {
+                        fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                    }
+
                     MouseArea { 
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
@@ -121,20 +134,28 @@ Rectangle {
                     Text { 
                         text: modelData.summary
                         color: "#ffffff"
-                        font.family: "Google Sans Flex"
+                        font.family: fc.mainFont
                         font.pixelSize: 12
                         font.weight: Font.Bold
                         elide: Text.ElideRight
                         width: parent.width
+
+                        Component.onCompleted: {
+                            fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                        }
                     }
                              
                     Text { 
                         text: modelData.body
                         color: Qt.rgba(1, 1, 1, 0.5)
-                        font.family: "Google Sans Flex"
+                        font.family: fc.mainFont
                         font.pixelSize: 10
                         elide: Text.ElideRight
                         width: parent.width
+
+                        Component.onCompleted: {
+                            fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                        }
                     }
                 }
             }
@@ -145,12 +166,15 @@ Rectangle {
     Text {
         text: "No notifications"
         color: Qt.rgba(1, 1, 1, 0.25)
-        font.family: "Google Sans Flex"
+        font.family: fc.mainFont
         font.pixelSize: 12
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        // 🎯 Anchored directly to the true vertical and horizontal center of the base card
         anchors.centerIn: parent 
         visible: notifList.count === 0
+
+        Component.onCompleted: {
+            fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+        }
     }
 }

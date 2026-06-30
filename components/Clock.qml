@@ -14,27 +14,33 @@ Column {
         onTriggered: clockRoot.currentTime = new Date()
     }
 
+    FontConfig { id: fc }
+
     Text {
         text: Qt.formatDateTime(clockRoot.currentTime, "h:mm ap")
-        font.family: "Google Sans Flex"
+        font.family: fc.mainFont
         font.pixelSize: 46
         font.weight: Font.Bold
         color: "#ffffff"
-        style: Text.Outline
-        styleColor: Qt.rgba(0, 0, 0, 0.35)
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
+        
+        Component.onCompleted: {
+            fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+        }
     }
 
     Text {
         text: Qt.formatDateTime(clockRoot.currentTime, "dddd • MMMM d")
-        font.family: "Google Sans Flex"
+        font.family: fc.mainFont
         font.pixelSize: 13
         font.weight: Font.Medium
         color: Qt.rgba(1, 1, 1, 0.6)
-        style: Text.Outline
-        styleColor: Qt.rgba(0, 0, 0, 0.35)
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
+        
+        Component.onCompleted: {
+            fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+        }
     }
 }

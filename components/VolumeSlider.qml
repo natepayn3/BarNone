@@ -12,6 +12,8 @@ Item {
 
     Component.onCompleted: volFetcher.running = true
 
+    FontConfig { id: fc }
+
     // --- 1. BACKGROUND TRACK (The empty part) ---
     Rectangle {
         id: bgTrack
@@ -26,9 +28,13 @@ Item {
             anchors.centerIn: parent
             text: volumeSliderRoot.percentageText
             color: Qt.rgba(1, 1, 1, 0.35)
-            font.family: "Google Sans Flex"
+            font.family: fc.mainFont
             font.pixelSize: 13
             font.weight: Font.Bold
+            
+            Component.onCompleted: {
+                fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+            }
         }
     }
 
@@ -50,9 +56,13 @@ Item {
             
             text: volumeSliderRoot.percentageText
             color: Qt.rgba(0, 0, 0, 0.85)
-            font.family: "Google Sans Flex"
+            font.family: fc.mainFont
             font.pixelSize: 13
             font.weight: Font.Bold
+            
+            Component.onCompleted: {
+                fc.applySmoothing(this)
+            }
         }
     }
 
@@ -61,12 +71,16 @@ Item {
     Text {
         id: bgIcon
         text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
-        font.family: "Material Symbols Outlined"
+        font.family: fc.iconFont
         font.pixelSize: 18
         color: Qt.rgba(1, 1, 1, 0.4)
         anchors.left: parent.left
         anchors.leftMargin: 16
         anchors.verticalCenter: parent.verticalCenter
+        
+        Component.onCompleted: {
+            fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+        }
     }
 
     // Foreground Icon (Dark overlay clipped right inside the moving bar)
@@ -77,11 +91,15 @@ Item {
 
         Text {
             text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
-            font.family: "Material Symbols Outlined"
+            font.family: fc.iconFont
             font.pixelSize: 18
             color: Qt.rgba(0, 0, 0, 0.75)
             x: 16
             anchors.verticalCenter: parent.verticalCenter
+            
+            Component.onCompleted: {
+                fc.applySmoothing(this)
+            }
         }
     }
 

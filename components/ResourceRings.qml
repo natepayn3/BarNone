@@ -39,25 +39,38 @@ Column {
         Shape {
             anchors.fill: parent
             layer.enabled: true; layer.samples: 4
-            
+
+            // 🎯 VECTOR OUTLINE LAYER: Active Progress Segment Drop-Shadow Only
             ShapePath {
-                fillColor: "transparent";
-                strokeColor: Qt.rgba(1, 1, 1, 0.06); 
+                fillColor: "transparent"
+                strokeColor: Qt.rgba(0, 0, 0, 0.35)
+                strokeWidth: 4.5
+                capStyle: ShapePath.RoundCap
+                PathAngleArc { 
+                    centerX: 40; centerY: 40; radiusX: 36; radiusY: 36 
+                    startAngle: -90; sweepAngle: Math.max(0.1, ringRow.value * 360) 
+                }
+            }
+            
+            // Standard Translucent Track Background (No outline underneath)
+            ShapePath {
+                fillColor: "transparent"
+                strokeColor: Qt.rgba(1, 1, 1, 0.06) 
                 strokeWidth: 2.5 
                 PathAngleArc { 
-                    centerX: 40; centerY: 40; 
-                    radiusX: 36; radiusY: 36; 
+                    centerX: 40; centerY: 40; radiusX: 36; radiusY: 36 
                     startAngle: -90; sweepAngle: 360 
                 }
             }
+
+            // Standard Active Progress Indicator 
             ShapePath {
-                fillColor: "transparent";
-                strokeColor: "#ffffff"; 
+                fillColor: "transparent"
+                strokeColor: "#ffffff"
                 strokeWidth: 2.5 
                 capStyle: ShapePath.RoundCap
                 PathAngleArc { 
-                    centerX: 40; centerY: 40; 
-                    radiusX: 36; radiusY: 36; 
+                    centerX: 40; centerY: 40; radiusX: 36; radiusY: 36 
                     startAngle: -90; sweepAngle: Math.max(0.1, ringRow.value * 360) 
                 }
             }
@@ -74,7 +87,9 @@ Column {
                 font.pixelSize: 11 
                 font.weight: Font.Bold
                 anchors.horizontalCenter: parent.horizontalCenter
-                Component.onCompleted: fc.applySmoothing(this)
+                Component.onCompleted: {
+                    fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                }
             }
             Text {
                 text: Math.round(ringRow.value * 100) + "%"
@@ -83,18 +98,18 @@ Column {
                 font.pixelSize: 13 
                 font.weight: Font.DemiBold
                 anchors.horizontalCenter: parent.horizontalCenter
-                Component.onCompleted: fc.applySmoothing(this)
+                Component.onCompleted: {
+                    fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                }
             }
         }
     }
 
-    // 🎯 Lock the inner column layout container to stick edge-to-edge
     Column {
         width: parent.width
         spacing: 14
         anchors.right: parent.right
         
-        // 🎯 Every item cleanly aligned to the right wall to line up vertically
         StatRingItem { label: "CPU"; value: ringsRoot.sysCpu; anchors.right: parent.right }
         StatRingItem { label: "GPU"; value: ringsRoot.sysGpu; anchors.right: parent.right }
         StatRingItem { label: "RAM"; value: ringsRoot.sysRam; anchors.right: parent.right }
