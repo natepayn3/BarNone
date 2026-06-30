@@ -4,7 +4,8 @@ import Quickshell.Io
 
 Column {
     id: ringsRoot
-    spacing: 12
+    spacing: 16
+    width: parent.width
 
     property real sysCpu: 0.0
     property real sysGpu: 0.0
@@ -14,62 +15,95 @@ Column {
     property var lastCpuTotal: 0
     property var lastCpuIdle: 0
 
+    FontConfig { id: fc }
+
     Timer {
-        interval: 3000; running: ringsRoot.visible; repeat: true; triggeredOnStart: true
-        onTriggered: { cpuStatReader.reload(); memInfoReader.reload(); if (!diskGpuProc.running) diskGpuProc.running = true; }
+        interval: 3000
+        running: ringsRoot.visible;
+        repeat: true; triggeredOnStart: true
+        onTriggered: { 
+            cpuStatReader.reload();
+            memInfoReader.reload();
+            if (!diskGpuProc.running) diskGpuProc.running = true; 
+        }
     }
 
     component StatRingItem : Item {
         id: ringRow
-        width: parent.width
-        height: 32
-        
+        width: 80  
+        height: 80
+
         property string label: ""
         property real value: 0.0
 
-        Text { 
-            text: ringRow.label
-            color: "#ffffff"
-            font.family: "Google Sans Flex"
-            font.pixelSize: 13
-            font.weight: Font.Bold
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        
-        Item {
-            width: 32; height: 32
-            anchors.horizontalCenter: parent.horizontalCenter
-            Shape {
-                anchors.fill: parent; layer.enabled: true; layer.samples: 4
-                ShapePath {
-                    fillColor: "transparent"; strokeColor: Qt.rgba(1, 1, 1, 0.1); strokeWidth: 4
-                    PathAngleArc { centerX: 16; centerY: 16; radiusX: 13; radiusY: 13; startAngle: -90; sweepAngle: 360 }
+        Shape {
+            anchors.fill: parent
+            layer.enabled: true; layer.samples: 4
+            
+            ShapePath {
+                fillColor: "transparent";
+                strokeColor: Qt.rgba(1, 1, 1, 0.06); 
+                strokeWidth: 2.5 
+                PathAngleArc { 
+                    centerX: 40; centerY: 40; 
+                    radiusX: 36; radiusY: 36; 
+                    startAngle: -90; sweepAngle: 360 
                 }
-                ShapePath {
-                    fillColor: "transparent"; strokeColor: "#ffffff"; strokeWidth: 4; capStyle: ShapePath.RoundCap
-                    PathAngleArc { centerX: 16; centerY: 16; radiusX: 13; radiusY: 13; startAngle: -90; sweepAngle: Math.max(0.1, ringRow.value * 360) }
+            }
+            ShapePath {
+                fillColor: "transparent";
+                strokeColor: "#ffffff"; 
+                strokeWidth: 2.5 
+                capStyle: ShapePath.RoundCap
+                PathAngleArc { 
+                    centerX: 40; centerY: 40; 
+                    radiusX: 36; radiusY: 36; 
+                    startAngle: -90; sweepAngle: Math.max(0.1, ringRow.value * 360) 
                 }
             }
         }
-        
-        Text { 
-            text: Math.round(ringRow.value * 100) + "%"
-            color: "#ffffff"
-            font.family: "Google Sans Flex"
-            font.pixelSize: 13
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
+
+        Column {
+            anchors.centerIn: parent
+            spacing: -1
+
+            Text {
+                text: ringRow.label
+                color: Qt.rgba(1, 1, 1, 0.4)
+                font.family: fc.mainFont
+                font.pixelSize: 11 
+                font.weight: Font.Bold
+                anchors.horizontalCenter: parent.horizontalCenter
+                Component.onCompleted: fc.applySmoothing(this)
+            }
+            Text {
+                text: Math.round(ringRow.value * 100) + "%"
+                color: "#ffffff"
+                font.family: fc.mainFont
+                font.pixelSize: 13 
+                font.weight: Font.DemiBold
+                anchors.horizontalCenter: parent.horizontalCenter
+                Component.onCompleted: fc.applySmoothing(this)
+            }
         }
     }
 
-    StatRingItem { label: "CPU"; value: ringsRoot.sysCpu }
-    StatRingItem { label: "GPU"; value: ringsRoot.sysGpu }
-    StatRingItem { label: "RAM"; value: ringsRoot.sysRam }
-    StatRingItem { label: "DSK"; value: ringsRoot.sysDisk }
+    // 🎯 Lock the inner column layout container to stick edge-to-edge
+    Column {
+        width: parent.width
+        spacing: 14
+        anchors.right: parent.right
+        
+        // 🎯 Every item cleanly aligned to the right wall to line up vertically
+        StatRingItem { label: "CPU"; value: ringsRoot.sysCpu; anchors.right: parent.right }
+        StatRingItem { label: "GPU"; value: ringsRoot.sysGpu; anchors.right: parent.right }
+        StatRingItem { label: "RAM"; value: ringsRoot.sysRam; anchors.right: parent.right }
+        StatRingItem { label: "DISK"; value: ringsRoot.sysDisk; anchors.right: parent.right }
+    }
 
     FileView {
-        id: memInfoReader; path: "/proc/meminfo"
+        id: memInfoReader;
+        path: "/proc/meminfo"
         onTextChanged: {
             let lines = text().split('\n'), total = 0, avail = 0;
             for (let i = 0; i < lines.length; i++) {
@@ -81,7 +115,8 @@ Column {
     }
 
     FileView {
-        id: cpuStatReader; path: "/proc/stat"
+        id: cpuStatReader;
+        path: "/proc/stat"
         onTextChanged: {
             let parts = text().split('\n')[0].split(/\s+/).filter(Boolean);
             if (parts.length >= 5) {

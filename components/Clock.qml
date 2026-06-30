@@ -15,7 +15,7 @@ Column {
     }
 
     Text {
-        text: Qt.formatDateTime(clockRoot.currentTime, "h:mm")
+        text: Qt.formatDateTime(clockRoot.currentTime, "h:mm ap")
         font.family: "Google Sans Flex"
         font.pixelSize: 46
         font.weight: Font.Bold
@@ -27,7 +27,7 @@ Column {
     }
 
     Text {
-        text: Qt.formatDateTime(clockRoot.currentTime, "AP  •  dddd, MMMM d")
+        text: Qt.formatDateTime(clockRoot.currentTime, "dddd • MMMM d")
         font.family: "Google Sans Flex"
         font.pixelSize: 13
         font.weight: Font.Medium

@@ -21,10 +21,9 @@ PanelWindow {
         right: true
     }
 
-    implicitWidth: 360
+    implicitWidth: 400
     color: "transparent"
 
-    // --- CORE NOTIFICATION SERVER ENGINE ---
     NotificationServer {
         id: notifServer
         bodySupported: true
@@ -32,7 +31,6 @@ PanelWindow {
         imageSupported: true
         persistenceSupported: true
         
-        // 🎯 FIX: Intercept incoming notifications and mark them to be tracked
         onNotification: (notif) => {
             notif.tracked = true;
         }
@@ -70,8 +68,9 @@ PanelWindow {
 
         Rectangle {
             id: bgCard
-            width: 320
-            height: Math.min(mainContentColumn.implicitHeight + 48, parent.height - 48)
+            width: 360
+            // Dynamic height combining the highest column and the wide footer tray below it
+            height: Math.max(leftColumn.implicitHeight, rightColumn.implicitHeight) + notifWrapper.implicitHeight + 68
             anchors.verticalCenter: parent.verticalCenter
             
             x: dashHitbox.isPinned ? (parent.width - width - 16) : parent.width
@@ -84,34 +83,73 @@ PanelWindow {
             border.width: 0
             radius: 16
 
-            HoverHandler {
-                id: cardHover
-            }
+            HoverHandler { id: cardHover }
 
-            ScrollView {
-                id: dashScroll
+            Item {
+                id: contentGrid
                 anchors.fill: parent
                 anchors.margins: 24
-                clip: true
-                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
+                // LEFT PANEL COLUMN (Clock, Weather, Sliders)
                 Column {
-                    id: mainContentColumn
-                    width: dashScroll.availableWidth
-                    spacing: 24
+                    id: leftColumn
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: rightColumn.left
+                    anchors.rightMargin: 24
+                    spacing: 20
 
-                    Clock { width: parent.width }
-                    Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
-                    Weather { width: parent.width }
-                    Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
-                    ResourceRings { width: parent.width }
-                    Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
+                    Clock { 
+                        width: parent.width
+                        Component.onCompleted: {
+                            for (let i = 0; i < children.length; i++) {
+                                if (children[i].horizontalAlignment !== undefined) {
+                                    children[i].horizontalAlignment = Text.AlignHCenter;
+                                }
+                            }
+                        }
+                    }
+                    
+                    Weather { 
+                        width: parent.width
+                        Component.onCompleted: {
+                            for (let i = 0; i < children.length; i++) {
+                                if (children[i].horizontalAlignment !== undefined) {
+                                    children[i].horizontalAlignment = Text.AlignHCenter;
+                                }
+                            }
+                        }
+                    }
+                    
                     VolumeSlider { width: parent.width }
-                    Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
                     Media { width: parent.width }
-                    Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
-                    Notifications { width: parent.width }
+                }
+
+                // RIGHT PANEL COLUMN (Resource Rings)
+                Column {
+                    id: rightColumn
+                    width: 64
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+
+                    ResourceRings {
+                        width: parent.width
+                    }
+                }
+
+                // 🎯 FULL-WIDTH NOTIFICATION TRAY (Spans all the way from left edge to right edge)
+                Item {
+                    id: notifWrapper
+                    // Aligns below whichever column ends up being taller
+                    anchors.top: leftColumn.implicitHeight > rightColumn.implicitHeight ? leftColumn.bottom : rightColumn.bottom
+                    anchors.topMargin: 24
+                    anchors.left: parent.left
+                    anchors.right: parent.right // 🎯 Stretches across the full dashboard width
+                    implicitHeight: childrenRect.height
+
+                    Notifications { 
+                        width: parent.width 
+                    }
                 }
             }
         }
