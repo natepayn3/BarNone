@@ -79,7 +79,7 @@ PanelWindow {
             Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
             Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-            color: Qt.rgba(0, 0, 0, 0.01)
+            color: Qt.rgba(0.2, 0.2, 0.2, 0.28)
             border.width: 0
             radius: 16
 
