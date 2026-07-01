@@ -57,12 +57,12 @@ PanelWindow {
                 id: leftSpeakerIcon
                 text: "speaker_2"
                 font.family: fc.iconFont
-                font.pixelSize: 175
+                font.pixelSize: 200
                 color: audioPopupWindow.colorBackground
                 styleColor: colorBackground
              
                 anchors.right: parent.left
-                anchors.rightMargin: -30
+                anchors.rightMargin: -35
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
             }
@@ -71,12 +71,12 @@ PanelWindow {
                 id: rightSpeakerIcon
                 text: "speaker_2"
                 font.family: fc.iconFont
-                font.pixelSize: 175
+                font.pixelSize: 200
                 color: audioPopupWindow.colorBackground
                 styleColor: colorBackground
 
                 anchors.left: parent.right
-                anchors.leftMargin: -30
+                anchors.leftMargin: -35
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
             }
