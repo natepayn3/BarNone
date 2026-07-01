@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Qt.labs.folderlistmodel
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
@@ -38,11 +39,19 @@ PanelWindow {
     property var lastRxBytes: 0
     property var lastTxBytes: 0
     property var lastTime: 0
+    
+    // Smooth text and vector delta dampening properties
+    property real lastCombinedSpeed: -1.0
+    property var lastTextUpdateTime: 0
+    
+    property int maxGraphPoints: 50
+    property real maxGraphCeiling: 10 * 1024 * 1024 
 
     FontConfig { id: fc }
     ModuleConfig { id: shellConfig }
 
     ListModel { id: vpnListModel }
+    ListModel { id: graphHistoryModel }
 
     Timer {
         id: syncVpnTimer
@@ -56,21 +65,27 @@ PanelWindow {
         }
     }
 
-    // --- Bandwidth Parser Engine ---
+    // --- Real-Time Stream Parser ---
     Process {
-        id: bandwidthProc
-        command: ["fish", "-c", "set dev (ip route show | awk '/default/ {print $5}' | head -n1); cat /proc/net/dev | grep \"$dev\""]
+        id: bandwidthStreamProc
+        command: ["fish", "-c", "
+            set dev (ip route show | awk '/default/ {print $5}' | head -n1)
+            while true
+                cat /proc/net/dev | grep \"$dev\"
+                sleep 0.1
+            end
+        "]
         running: networkPopupWindow.visible
         
-        stdout: StdioCollector {
-            onStreamFinished: {
+        stdout: SplitParser {
+            onRead: data => {
                 let formatBytes = function(bytes) {
                     if (bytes < 1024) return bytes.toFixed(0) + " B/s";
                     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB/s";
                     return (bytes / 1048576).toFixed(1) + " MB/s";
                 };
 
-                let textStr = this.text.trim();
+                let textStr = data.trim();
                 if (!textStr) return;
                 
                 let rawLineParts = textStr.split(":");
@@ -88,26 +103,31 @@ PanelWindow {
                     if (elapsed > 0) {
                         let rxSpeed = (rx - networkPopupWindow.lastRxBytes) / elapsed;
                         let txSpeed = (tx - networkPopupWindow.lastTxBytes) / elapsed;
-                        networkPopupWindow.downloadSpeed = formatBytes(rxSpeed);
-                        networkPopupWindow.uploadSpeed = formatBytes(txSpeed);
+                        
+                        // ⏱️ Text Readout Throttle: Evaluates text data strings once every 1000ms at most
+                        if (now - networkPopupWindow.lastTextUpdateTime >= 1000) {
+                            networkPopupWindow.downloadSpeed = formatBytes(rxSpeed);
+                            networkPopupWindow.uploadSpeed = formatBytes(txSpeed);
+                            networkPopupWindow.lastTextUpdateTime = now;
+                        }
+
+                        let combinedSpeed = rxSpeed + txSpeed;
+
+                        if (combinedSpeed !== networkPopupWindow.lastCombinedSpeed) {
+                            graphHistoryModel.append({ "speedValue": combinedSpeed });
+                            if (graphHistoryModel.count > networkPopupWindow.maxGraphPoints) {
+                                graphHistoryModel.remove(0);
+                            }
+                            networkPopupWindow.lastCombinedSpeed = combinedSpeed;
+                        }
                     }
                 }
 
                 networkPopupWindow.lastRxBytes = rx;
                 networkPopupWindow.lastTxBytes = tx;
                 networkPopupWindow.lastTime = now;
-                bandwidthProc.running = false;
             }
         }
-    }
-
-    Timer {
-        id: bandwidthTimer
-        interval: 1000
-        running: networkPopupWindow.visible
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: if (!bandwidthProc.running) bandwidthProc.running = true;
     }
 
     MouseArea {
@@ -118,8 +138,6 @@ PanelWindow {
         Rectangle {
             id: bgCard
             width: shellConfig.panelWidth
-            
-            // Dynamic Height Tracker
             height: networkPopupWindow.showFileBrowser ? 480 : (mainLayout.implicitHeight + 44)
             
             Behavior on height {
@@ -201,21 +219,119 @@ PanelWindow {
                         }
                     }
 
+                    // --- Fixed Columns with Symmetric Centering Spacer Blocks ---
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 20
+                        spacing: 0
+                        
+                        // Push content evenly from the left boundary
+                        Item { Layout.fillWidth: true }
                         
                         ColumnLayout {
                             spacing: 2
-                            Layout.fillWidth: true
-                            Text { text: "Download"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(1, 1, 1, 0.5) }
-                            Text { text: networkPopupWindow.downloadSpeed; font.family: shellConfig.shellFont; font.pixelSize: 18; font.weight: Font.Bold; color: shellConfig.themeText }
+                            Layout.preferredWidth: 110 
+                            Text { 
+                                text: "Download"
+                                font.family: shellConfig.shellFont
+                                font.pixelSize: 14
+                                color: Qt.rgba(1, 1, 1, 0.5)
+                                horizontalAlignment: Text.AlignHCenter
+                                Layout.fillWidth: true
+                                // Added outline to subheader text
+                                style: Text.Outline
+                                styleColor: Qt.rgba(0, 0, 0, 0.35)
+                            }
+                            Text { 
+                                text: networkPopupWindow.downloadSpeed
+                                font.family: shellConfig.shellFont
+                                font.pixelSize: 18
+                                font.weight: Font.Bold
+                                color: shellConfig.themeText
+                                horizontalAlignment: Text.AlignHCenter
+                                Layout.fillWidth: true
+                                // Added outline to live numerical values
+                                style: Text.Outline
+                                styleColor: Qt.rgba(0, 0, 0, 0.35)
+                            }
                         }
+                        
+                        // Enforces a fixed separation gap between the data wells
+                        Item { Layout.fillWidth: true; Layout.minimumWidth: 40 }
+                        
                         ColumnLayout {
                             spacing: 2
-                            Layout.fillWidth: true
-                            Text { text: "Upload"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(1, 1, 1, 0.5) }
-                            Text { text: networkPopupWindow.uploadSpeed; font.family: shellConfig.shellFont; font.pixelSize: 18; font.weight: Font.Bold; color: shellConfig.themeText }
+                            Layout.preferredWidth: 110
+                            Text { 
+                                text: "Upload"
+                                font.family: shellConfig.shellFont
+                                font.pixelSize: 14
+                                color: Qt.rgba(1, 1, 1, 0.5)
+                                horizontalAlignment: Text.AlignHCenter
+                                Layout.fillWidth: true
+                                // Added outline to subheader text
+                                style: Text.Outline
+                                styleColor: Qt.rgba(0, 0, 0, 0.35)
+                            }
+                            Text { 
+                                text: networkPopupWindow.uploadSpeed
+                                font.family: shellConfig.shellFont
+                                font.pixelSize: 18
+                                font.weight: Font.Bold
+                                color: shellConfig.themeText
+                                horizontalAlignment: Text.AlignHCenter
+                                Layout.fillWidth: true
+                                // Added outline to live numerical values
+                                style: Text.Outline
+                                styleColor: Qt.rgba(0, 0, 0, 0.35)
+                            }
+                        }
+                        
+                        // Push content evenly from the right boundary
+                        Item { Layout.fillWidth: true }
+                    }
+
+                    // --- Real-Time Floating Wave Graph ---
+                    Item {
+                        id: sparklineCanvasWrapper
+                        Layout.fillWidth: true
+                        height: 44
+                        visible: graphHistoryModel.count > 1
+
+                        Shape {
+                            anchors.fill: parent
+                            layer.enabled: true
+                            layer.samples: 4
+
+                            ShapePath {
+                                fillColor: "transparent"
+                                strokeColor: "#ffffff"
+                                strokeWidth: 1.75
+                                capStyle: ShapePath.RoundCap
+                                joinStyle: ShapePath.RoundJoin
+
+                                PathPolyline {
+                                    path: {
+                                        let pointsList = [];
+                                        let totalPoints = graphHistoryModel.count;
+                                        if (totalPoints < 2) return pointsList;
+
+                                        let availableWidth = sparklineCanvasWrapper.width;
+                                        let availableHeight = sparklineCanvasWrapper.height;
+
+                                        for (let i = 0; i < totalPoints; i++) {
+                                            let nodeValue = graphHistoryModel.get(i).speedValue;
+                                            
+                                            let clampedValue = Math.min(nodeValue, networkPopupWindow.maxGraphCeiling);
+                                            let scaleRatio = clampedValue / networkPopupWindow.maxGraphCeiling;
+
+                                            let coordX = (i / (totalPoints - 1)) * availableWidth;
+                                            let coordY = availableHeight - (scaleRatio * availableHeight);
+                                            pointsList.push(Qt.point(coordX, coordY));
+                                        }
+                                        return pointsList;
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -223,7 +339,17 @@ PanelWindow {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "VPN Profiles"; font.family: shellConfig.shellFont; font.pixelSize: 14; font.bold: true; color: shellConfig.themeText; Layout.fillWidth: true }
+                        Text { 
+                            text: "VPN Profiles"
+                            font.family: shellConfig.shellFont
+                            font.pixelSize: 14
+                            font.bold: true
+                            color: shellConfig.themeText
+                            Layout.fillWidth: true 
+                            // Added outline to the section header
+                            style: Text.Outline
+                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        }
                         
                         Button {
                             id: importBtn
@@ -236,7 +362,18 @@ PanelWindow {
                                 border.color: importBtn.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
                                 border.width: 1
                             }
-                            contentItem: Text { text: "+ Import"; font.family: shellConfig.shellFont; font.pixelSize: 12; font.bold: true; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                            contentItem: Text { 
+                                text: "+ Import"
+                                font.family: shellConfig.shellFont
+                                font.pixelSize: 12
+                                font.bold: true
+                                color: shellConfig.themeText
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter 
+                                // Added outline to the action button label text
+                                style: Text.Outline
+                                styleColor: Qt.rgba(0, 0, 0, 0.35)
+                            }
                             onClicked: { networkPopupWindow.hasImportError = false; networkPopupWindow.showFileBrowser = true; }
                         }
                     }
@@ -245,7 +382,7 @@ PanelWindow {
                         id: profileListView
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        implicitHeight: Math.min(vpnListModel.count * 68, 200)
+                        implicitHeight: Math.min(vpnListModel.count * 68, 140)
                         spacing: 8
                         clip: true
                         model: vpnListModel
@@ -329,17 +466,43 @@ PanelWindow {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Select WireGuard Config:"; font.family: shellConfig.shellFont; font.pixelSize: 14; font.bold: true; color: shellConfig.themeText; Layout.fillWidth: true }
+                        Text { 
+                            text: "Select WireGuard Config:"
+                            font.family: shellConfig.shellFont
+                            font.pixelSize: 14
+                            font.bold: true
+                            color: shellConfig.themeText
+                            Layout.fillWidth: true 
+                            style: Text.Outline
+                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        }
                         Button {
                             id: cancelBtn; flat: true; implicitWidth: 70; implicitHeight: 28
                             background: Rectangle { color: cancelBtn.hovered ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"; border.color: cancelBtn.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"; border.width: 1; radius: 6 }
-                            contentItem: Text { text: "Cancel"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(1,1,1,0.6); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                            contentItem: Text { 
+                                text: "Cancel"
+                                font.family: shellConfig.shellFont
+                                font.pixelSize: 12
+                                color: Qt.rgba(1,1,1,0.6)
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter 
+                                style: Text.Outline
+                                styleColor: Qt.rgba(0, 0, 0, 0.35)
+                            }
                             onClicked: networkPopupWindow.showFileBrowser = false
                         }
                     }
 
-                    // FIXED: Aligned directory path trace breadcrumb color strictly to themeText token
-                    Text { text: networkPopupWindow.currentBrowserPath.replace("file://", ""); font.family: shellConfig.shellFont; font.pixelSize: 11; color: shellConfig.themeText; elide: Text.ElideLeft; Layout.fillWidth: true }
+                    Text { 
+                        text: networkPopupWindow.currentBrowserPath.replace("file://", "")
+                        font.family: shellConfig.shellFont
+                        font.pixelSize: 11
+                        color: shellConfig.themeText
+                        elide: Text.ElideLeft
+                        Layout.fillWidth: true 
+                        style: Text.Outline
+                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                    }
 
                     Rectangle {
                         Layout.fillWidth: true; Layout.fillHeight: true; color: Qt.rgba(0, 0, 0, 0.15); radius: 10; border.color: shellConfig.colorBorder; border.width: 1; clip: true
@@ -350,7 +513,11 @@ PanelWindow {
                             property string lastPath: ""
 
                             ListView {
-                                id: fileListView; anchors.fill: parent; anchors.margins: 6; spacing: 4; clip: true
+                                id: fileListView
+                                anchors.fill: parent
+                                anchors.margins: 6
+                                spacing: 4
+                                clip: true
                                 model: FolderListModel { id: folderModel; folder: networkPopupWindow.currentBrowserPath; showDirsFirst: true; showDotAndDotDot: true; nameFilters: ["*.conf"] }
 
                                 delegate: MouseArea {
@@ -367,9 +534,23 @@ PanelWindow {
 
                                     RowLayout {
                                         spacing: 8; anchors.fill: parent; anchors.leftMargin: 6
-                                        // FIXED: Pointed icon color and file label text parameters to uniform theme properties
-                                        Text { text: fileIsDir ? "folder" : "description"; font.family: "Material Symbols Outlined"; font.pixelSize: 16; color: shellConfig.themeText }
-                                        Text { text: fileName; font.family: shellConfig.shellFont; font.pixelSize: 13; color: shellConfig.themeText; Layout.fillWidth: true }
+                                        Text { 
+                                            text: fileIsDir ? "folder" : "description"
+                                            font.family: "Material Symbols Outlined"
+                                            font.pixelSize: 16
+                                            color: shellConfig.themeText 
+                                            style: Text.Outline
+                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                        }
+                                        Text { 
+                                            text: fileName
+                                            font.family: shellConfig.shellFont
+                                            font.pixelSize: 13
+                                            color: shellConfig.themeText
+                                            Layout.fillWidth: true 
+                                            style: Text.Outline
+                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                        }
                                     }
 
                                     onClicked: {
