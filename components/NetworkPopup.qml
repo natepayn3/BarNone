@@ -12,7 +12,6 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-launcher"
-    // Handles top-level keyboard routing allocations on demand
     WlrLayershell.keyboardFocus: visible ? WlrLayershell.OnDemand : WlrLayershell.None
     exclusionMode: ExclusionMode.Ignore
 
@@ -47,6 +46,8 @@ PanelWindow {
     property real lastCombinedSpeed: -1.0
     property var lastTextUpdateTime: 0
     
+    // --- Rolling Timeline Properties ---
+    property real currentInstantSpeed: 0.0
     property int maxGraphPoints: 50
     property real maxGraphCeiling: 10 * 1024 * 1024 
 
@@ -65,6 +66,21 @@ PanelWindow {
         onTriggered: {
             vpnListPopulator.running = false;
             vpnListPopulator.running = true;
+        }
+    }
+
+    // --- Constant Rolling Timeline Driver ---
+    Timer {
+        id: timelineGraphTicker
+        interval: 500
+        running: networkPopupWindow.visible
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            graphHistoryModel.append({ "speedValue": networkPopupWindow.currentInstantSpeed });
+            if (graphHistoryModel.count > networkPopupWindow.maxGraphPoints) {
+                graphHistoryModel.remove(0);
+            }
         }
     }
 
@@ -113,15 +129,8 @@ PanelWindow {
                             networkPopupWindow.lastTextUpdateTime = now;
                         }
 
-                        let combinedSpeed = rxSpeed + txSpeed;
-
-                        if (combinedSpeed !== networkPopupWindow.lastCombinedSpeed) {
-                            graphHistoryModel.append({ "speedValue": combinedSpeed });
-                            if (graphHistoryModel.count > networkPopupWindow.maxGraphPoints) {
-                                graphHistoryModel.remove(0);
-                            }
-                            networkPopupWindow.lastCombinedSpeed = combinedSpeed;
-                        }
+                        // Feed our live calculations straight out to the timeline property
+                        networkPopupWindow.currentInstantSpeed = rxSpeed + txSpeed;
                     }
                 }
 
@@ -136,8 +145,6 @@ PanelWindow {
         id: outsideDismiss
         anchors.fill: parent
         onClicked: networkPopupWindow.animateActive = false 
-
-        // FIXED: Focus and Escape keys are attached to the MouseArea item scopes
         focus: true
         Keys.onEscapePressed: networkPopupWindow.animateActive = false
 
@@ -167,7 +174,6 @@ PanelWindow {
                 font.pixelSize: 125
                 color: shellConfig.colorBackground
                 styleColor: colorBackground
-             
                 anchors.right: parent.left
                 anchors.rightMargin: -20
                 anchors.verticalCenter: parent.verticalCenter
@@ -181,7 +187,6 @@ PanelWindow {
                 font.pixelSize: 125
                 color: shellConfig.colorBackground
                 styleColor: colorBackground
-
                 anchors.left: parent.right
                 anchors.leftMargin: -20
                 anchors.verticalCenter: parent.verticalCenter
@@ -256,7 +261,6 @@ PanelWindow {
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 0
-                        
                         Item { Layout.fillWidth: true }
                         
                         ColumnLayout {
@@ -278,7 +282,7 @@ PanelWindow {
                         Item { Layout.fillWidth: true }
                     }
 
-                    // --- Real-Time Floating Wave Graph ---
+                    // --- Real-Time Area Timeline Graph ---
                     Item {
                         id: sparklineCanvasWrapper
                         Layout.fillWidth: true
@@ -291,9 +295,43 @@ PanelWindow {
                             layer.samples: 4
 
                             ShapePath {
+                                id: filledAreaPath
+                                fillColor: Qt.rgba(1, 1, 1, 0.08) 
+                                strokeColor: "transparent"
+
+                                PathPolyline {
+                                    path: {
+                                        let pointsList = [];
+                                        let totalPoints = graphHistoryModel.count;
+                                        if (totalPoints < 2) return pointsList;
+
+                                        let availableWidth = sparklineCanvasWrapper.width;
+                                        let availableHeight = sparklineCanvasWrapper.height;
+
+                                        pointsList.push(Qt.point(0, availableHeight));
+
+                                        for (let i = 0; i < totalPoints; i++) {
+                                            let nodeValue = graphHistoryModel.get(i).speedValue;
+                                            let clampedValue = Math.min(nodeValue, networkPopupWindow.maxGraphCeiling);
+                                            let scaleRatio = clampedValue / networkPopupWindow.maxGraphCeiling;
+                                            
+                                            let coordX = (i / (networkPopupWindow.maxGraphPoints - 1)) * availableWidth;
+                                            let coordY = availableHeight - (scaleRatio * availableHeight);
+                                            pointsList.push(Qt.point(coordX, coordY));
+                                        }
+
+                                        let lastX = ((totalPoints - 1) / (networkPopupWindow.maxGraphPoints - 1)) * availableWidth;
+                                        pointsList.push(Qt.point(lastX, availableHeight));
+                                        
+                                        return pointsList;
+                                    }
+                                }
+                            }
+
+                            ShapePath {
                                 fillColor: "transparent"
-                                strokeColor: "#ffffff"
-                                strokeWidth: 1.75
+                                strokeColor: Qt.rgba(1, 1, 1, 0.6)
+                                strokeWidth: 1.5
                                 capStyle: ShapePath.RoundCap
                                 joinStyle: ShapePath.RoundJoin
 
@@ -308,11 +346,10 @@ PanelWindow {
 
                                         for (let i = 0; i < totalPoints; i++) {
                                             let nodeValue = graphHistoryModel.get(i).speedValue;
-                                            
                                             let clampedValue = Math.min(nodeValue, networkPopupWindow.maxGraphCeiling);
                                             let scaleRatio = clampedValue / networkPopupWindow.maxGraphCeiling;
-
-                                            let coordX = (i / (totalPoints - 1)) * availableWidth;
+                                            
+                                            let coordX = (i / (networkPopupWindow.maxGraphPoints - 1)) * availableWidth;
                                             let coordY = availableHeight - (scaleRatio * availableHeight);
                                             pointsList.push(Qt.point(coordX, coordY));
                                         }
@@ -363,13 +400,10 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                
-                                // Neutral alpha-blending that highlights the active profile without solid colors
                                 color: networkPopupWindow.activeVpnName === profileName 
-                                    ? Qt.rgba(1, 1, 1, 0.14) // Clean soft glare when connected
+                                    ? Qt.rgba(1, 1, 1, 0.14) 
                                     : (parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent")
                                 
-                                // Soft white border ring for connected profiles, subtle dark ring on hover
                                 border.color: networkPopupWindow.activeVpnName === profileName 
                                     ? Qt.rgba(1, 1, 1, 0.35) 
                                     : (parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent")
@@ -385,11 +419,7 @@ PanelWindow {
                                     text: "vpn_key"
                                     font.family: "Material Symbols Outlined"
                                     font.pixelSize: 18
-                                    
-                                    // Stays pure white when connected, muted translucent gray when disconnected
-                                    color: networkPopupWindow.activeVpnName === profileName 
-                                        ? "#ffffff" 
-                                        : Qt.rgba(1, 1, 1, 0.4)
+                                    color: networkPopupWindow.activeVpnName === profileName ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4)
                                 }
 
                                 ColumnLayout {
@@ -408,24 +438,15 @@ PanelWindow {
                                         implicitWidth: 40
                                         implicitHeight: 20
                                         radius: 10
-                                        
-                                        // Soft white blend when checked, dark transparent frame when idle
-                                        color: itemToggleSwitch.checked 
-                                            ? Qt.rgba(1, 1, 1, 0.25) 
-                                            : Qt.rgba(1, 1, 1, 0.1)
-                                        
+                                        color: itemToggleSwitch.checked ? Qt.rgba(1, 1, 1, 0.25) : Qt.rgba(1, 1, 1, 0.1)
                                         border.color: itemToggleSwitch.checked ? Qt.rgba(1, 1, 1, 0.2) : "transparent"
                                         border.width: 1
 
-                                        // The Slider Knob/Thumb
                                         Rectangle {
                                             width: 14
                                             height: 14
                                             radius: 7
-                                            
-                                            // Crisp white when active, muted gray when disabled (no accent colors)
                                             color: itemToggleSwitch.checked ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4)
-                                            
                                             anchors.verticalCenter: parent.verticalCenter
                                             x: itemToggleSwitch.checked ? 22 : 4
                                             Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -438,21 +459,15 @@ PanelWindow {
                                     id: delBtn
                                     flat: true
                                     implicitWidth: 28; implicitHeight: 28
-                                    
-                                    // Soft, translucent white highlight on hover instead of red tint
                                     background: Rectangle { 
                                         color: delBtn.hovered ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
                                         radius: 6 
                                     }
-                                    
                                     contentItem: Text { 
                                         text: "delete"
                                         font.family: "Material Symbols Outlined"
                                         font.pixelSize: 16
-                                        
-                                        // Bright white on hover, muted gray when idle
                                         color: delBtn.hovered ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4)
-                                        
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter 
                                     }
@@ -502,8 +517,6 @@ PanelWindow {
                                     folder: networkPopupWindow.currentBrowserPath
                                     showDirsFirst: true
                                     showDotAndDotDot: true
-                                    
-                                    // EXPANDED FILTER: Tells the layout engine to reveal all target profile types
                                     nameFilters: ["*.conf", "*.ovpn", "*.vpn"] 
                                 }
                                 delegate: MouseArea {
@@ -579,7 +592,6 @@ PanelWindow {
                     if (parts.length >= 2) {
                         let type = parts[0], name = parts[1], state = parts[2] || "";
                         
-                        // EXPANDED FILTER: Captures standard wireguard, generic VPNs, tun links, and raw virtual devices
                         if (type === "wireguard" || type === "vpn" || type === "tun" || type === "overlay" || type === "connection") {
                             if (state.indexOf("activated") !== -1) currentActive = name;
                             if (incomingProfiles.indexOf(name) === -1) incomingProfiles.push(name);
