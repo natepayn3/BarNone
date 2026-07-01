@@ -275,7 +275,7 @@ PanelWindow {
                   
                     Text {
                         anchors.centerIn: parent
-                        text: "swap_calls" // Fluid throughput activity directional vector glyph
+                        text: "settings_ethernet"
                         font.family: fc.iconFont
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
