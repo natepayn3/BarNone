@@ -55,6 +55,36 @@ PanelWindow {
             border.width: 1
             radius: shellConfig.radiusValue
 
+            // --- Standalone Left Side Speaker Icon ---
+            Text {
+                id: leftSpeakerIcon
+                text: "speaker_2"
+                font.family: fc.iconFont
+                font.pixelSize: 175
+                color: audioPopupWindow.colorBackground
+                styleColor: colorBackground
+                
+                anchors.right: parent.left
+                anchors.rightMargin: -30
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 60
+            }
+
+            // --- Standalone Right Side Speaker Icon ---
+            Text {
+                id: rightSpeakerIcon
+                text: "speaker_2"
+                font.family: fc.iconFont
+                font.pixelSize: 175
+                color: audioPopupWindow.colorBackground
+                styleColor: colorBackground
+
+                anchors.left: parent.right
+                anchors.leftMargin: -30
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 60
+            }
+
             // --- DECLARATIVE STATE ENGINE ---
             states: [
                 State {
@@ -135,7 +165,7 @@ PanelWindow {
 
                     Text {
                         text: audioPopupWindow.isMuted ? "volume_off" : "volume_up"
-                        font.family: "Material Symbols Outlined"
+                        font.family: fc.iconFont
                         font.pixelSize: 32
                         color: Qt.rgba(1, 1, 1, 0.9)
                         style: Text.Outline
@@ -238,7 +268,7 @@ PanelWindow {
 
                                 Text {
                                     text: "check"
-                                    font.family: "Material Symbols Outlined"
+                                    font.family: fc.iconFont
                                     font.pixelSize: 20
                                     color: "#ffffff"
                                     opacity: 0.95
@@ -366,7 +396,7 @@ PanelWindow {
         if (visible) {
             outsideDismiss.forceActiveFocus();
             pollTimer.start();
-            audioPopupWindow.animateActive = true; // Safe visibility cascade kickoff
+            audioPopupWindow.animateActive = true;
         } else {
             pollTimer.stop();
             audioPopupWindow.animateActive = false;
