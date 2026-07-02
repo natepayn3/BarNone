@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Io
+import "../configs"
 
 Scope {
     id: launcherModuleRoot
