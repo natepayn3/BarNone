@@ -112,14 +112,14 @@ PanelWindow {
                 Item {
                     id: placeholderContainer
                     visible: trayWindow.totalItemCount === 0
-                    width: 200
+                    width: 64
                     height: 64
                   
                     Text {
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        text: "blur_on"
+                        text: "view_apps"
                         font.family: fc.iconFont
                         font.pixelSize: 28
                         color: Qt.rgba(trayWindow.themeText.r, trayWindow.themeText.g, trayWindow.themeText.b, 0.35)
