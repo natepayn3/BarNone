@@ -248,7 +248,7 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: parent.containsMouse ? fc.themeAccent : "transparent"
+                                color: parent.containsMouse ? shellConfig.themeAccent : "transparent"
                                 border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                 border.width: 1
                             }
@@ -415,7 +415,7 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: parent.containsMouse ? fc.themeAccent : "transparent"
+                                color: parent.containsMouse ? shellConfig.themeAccent : "transparent"
                                 border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                 border.width: 1
                             }
