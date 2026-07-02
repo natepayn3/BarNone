@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import Quickshell.Wayland
 import Quickshell.Services.SystemTray
 import "../configs"
@@ -18,26 +19,33 @@ PanelWindow {
     property int totalItemCount: SystemTray.items.values.length
     
     implicitWidth: totalItemCount === 0 ? 244 : (totalItemCount * 64) + ((totalItemCount - 1) * 16) + 48
-    implicitHeight: 120 // Static canvas bounds matching Dock strategy
+    implicitHeight: 120 
     color: "transparent"
     exclusiveZone: 0
 
     FontConfig { id: fc }
     ModuleConfig { id: shellConfig }
 
-    // Mask strategy ported from Dock.qml to clip input area safely
+    // --- Mask Surfaces ---
     Item {
-        id: staticMaskSurface
+        id: minimalMaskSurface
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        height: trayHitbox.isPinned ? 120 : 16
+        height: 16
     }
 
+    Item {
+        id: pinnedMaskSurface
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: 120
+    }
+
+    // Swapping the item reference directly forces Quickshell to update the mask layout
     mask: Region {
-        Region {
-            item: staticMaskSurface
-        }
+        item: trayHitbox.isPinned ? pinnedMaskSurface : minimalMaskSurface
     }
 
     property color themeText: shellConfig.themeText
@@ -53,7 +61,8 @@ PanelWindow {
         hoverEnabled: true
 
         property bool isPinned: false
-        property bool stableHover: hotspotTrigger.containsMouse || innerCapsuleMouseTracker.containsMouse
+        // FIX: Evaluates the entire container hitbox so sibling hovers don't trip the timer
+        property bool stableHover: trayHitbox.containsMouse
 
         onStableHoverChanged: {
             if (stableHover) {
@@ -80,7 +89,6 @@ PanelWindow {
             radius: shellConfig.radiusValue - 2
             anchors.horizontalCenter: parent.horizontalCenter
  
-            // Slide mechanics inverted for top anchor but timings matched perfectly to Dock
             y: trayHitbox.isPinned ? 6 : -height
             color: fc.trackBackground
             border.color: trayHitbox.isPinned ? fc.borderMuted : "transparent"
@@ -125,6 +133,7 @@ PanelWindow {
                     delegate: Item {
                         width: 64
                         height: 64
+                        z: trayWindow.activeHoverIndex === index ? 10 : 1
             
                         Rectangle {
                             anchors.fill: parent
@@ -134,14 +143,13 @@ PanelWindow {
                             border.width: 1
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
-      
 
-                        Image {
+                        // Fix: Reverted to use native source bindings driven by Quickshell.iconPath
+                        IconImage {
                             anchors.centerIn: parent
                             width: 32
                             height: 32
-                            source: modelData.iconPath ? "file://" + modelData.iconPath : "image://icon/" + (modelData.icon || "image-missing")
-                            fillMode: Image.PreserveAspectFit
+                            source: modelData.iconPath ? "file://" + modelData.iconPath : Quickshell.iconPath(modelData.icon || "image-missing")
                             asynchronous: true
                             opacity: trayHitbox.isPinned ? 0.9 : 0.0
                             Behavior on opacity { NumberAnimation { duration: 180 } }
@@ -165,8 +173,9 @@ PanelWindow {
                                 id: tooltipText
                                 anchors.centerIn: parent
                                 text: modelData.title || modelData.id || ""
-                                font.pointSize: 10
-                                font.weight: Font.Medium
+                                font.pointSize: 11
+                                font.family: fc.mainFont
+                                font.weight: Font.Normal
                                 color: trayWindow.themeText
                                 
                                 Component.onCompleted: {
@@ -194,12 +203,6 @@ PanelWindow {
                         }
                     }
                 }
-            }
-
-            MouseArea {
-                id: innerCapsuleMouseTracker
-                anchors.fill: parent
-                hoverEnabled: true
             }
         }
     }
