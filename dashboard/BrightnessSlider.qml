@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell.Io
+import "../../configs"
 
 Item {
     id: brightnessSliderRoot
