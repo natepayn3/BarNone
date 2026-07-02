@@ -57,6 +57,40 @@ PanelWindow {
 
     property int activeHoverIndex: -1
 
+    function resolveAppName(modelData) {
+        if (modelData.title && modelData.title.trim() !== "") {
+            return modelData.title;
+        }
+
+        let rawId = modelData.id || "";
+        if (rawId !== "") {
+            // Isolate the last segment if it's a reverse DNS string
+            let baseName = rawId.split('.').pop();
+            
+            // Split into individual words by breaking on dashes, underscores, or spaces
+            let words = baseName.split(/[-_\s]+/);
+            
+            // Filter out generic tray keywords and standalone instance numbers
+            let cleanWords = words.filter(word => {
+                let lower = word.toLowerCase();
+                // Drop common keywords, empty strings, and any standalone digit
+                return lower !== "status" && 
+                    lower !== "icon" && 
+                    lower !== "tray" && 
+                    lower !== "" && 
+                    !lower.match(/^\d+$/);
+            });
+            
+            // Fallback to the original base name if filtering emptied the array entirely
+            let finalName = cleanWords.length > 0 ? cleanWords.join(" ") : baseName.replace(/[-_]/g, " ");
+                                    
+            // Capitalize the remaining words cleanly
+            return finalName.replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        return "Application";
+    }
+
     MouseArea {
         id: trayHitbox
         anchors.fill: parent
@@ -174,8 +208,12 @@ PanelWindow {
                             anchors.centerIn: parent
                             width: 32
                             height: 32
+                            
+                            // Evaluate if the source is already a file/pixmap URI before invoking iconPath lookup
                             source: modelData.iconPath ? "file://" + modelData.iconPath : 
+                                    (modelData.icon && modelData.icon.startsWith("image://")) ? modelData.icon :
                                     Quickshell.iconPath((modelData.icon || "image-missing").replace("image://icon/", ""))
+                                    
                             asynchronous: true
                             opacity: (trayHitbox.isPinned || trayWindow.menuActive) ? 0.9 : 0.0
                             Behavior on opacity { NumberAnimation { duration: 180 } }
@@ -183,7 +221,8 @@ PanelWindow {
 
                         Rectangle {
                             id: tooltipBubble
-                            visible: trayWindow.activeHoverIndex === index && modelData.title !== "" && !trayWindow.menuActive
+                            // Force visibility to true if we have any way to identify the app, or use a absolute fallback
+                            visible: trayWindow.activeHoverIndex === index && !trayWindow.menuActive
                             width: tooltipText.contentWidth + 16
                             height: 26
                             radius: 6
@@ -198,15 +237,13 @@ PanelWindow {
                             Text {
                                 id: tooltipText
                                 anchors.centerIn: parent
-                                text: modelData.title || modelData.id || ""
+                                
+                                text: trayWindow.resolveAppName(modelData)
+                                    
                                 font.pointSize: 11
                                 font.family: fc.mainFont
                                 font.weight: Font.Normal
                                 color: trayWindow.themeText
-                                
-                                Component.onCompleted: {
-                                    fc.applyOutline(this, fc.overlayBackground)
-                                }
                             }
                         }
 
