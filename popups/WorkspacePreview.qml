@@ -166,13 +166,24 @@ PanelWindow {
         Item {
             id: positioningContainer
             anchors.centerIn: parent
-            width: parent.width * 0.85
+            
+            property real maxAllowedWidth: parent.width * 0.85
+            property real requiredWidth: {
+                let total = 0;
+                for (let i = 0; i < overviewWindow.activeWorkspaceList.length; i++) {
+                    total += 594;
+                }
+                return total - 64;
+            }
+
+            width: requiredWidth > maxAllowedWidth ? maxAllowedWidth : requiredWidth
             height: overviewLayoutFlow.implicitHeight
 
             Flow {
                 id: overviewLayoutFlow
                 anchors.fill: parent
-                spacing: 64 // Handles spacing cleanly across wraps natively
+                spacing: 64
+                flow: Flow.LeftToRight
 
                 Repeater {
                     model: overviewWindow.activeWorkspaceList
@@ -185,6 +196,7 @@ PanelWindow {
                         property int activeHoverWindowIndex: -1
 
                         property bool isVerticalWorkspace: viewportFrame.calculatedBounds.isVertical
+                        property real targetScale: isTargetActive ? 1.18 : (tileCardMouseArea.containsMouse ? 1.02 : 1.0)
 
                         width: Math.round(viewportFrame.width + 74)
                         height: 440
@@ -194,7 +206,6 @@ PanelWindow {
                             width: parent.width
                             height: tileWrapper.isVerticalWorkspace ? 440 : 300
                             
-                            // Locks items of varying heights to a perfect shared vertical alignment center axis
                             anchors.verticalCenter: parent.verticalCenter
                             
                             radius: overviewWindow.radiusValue
@@ -204,7 +215,7 @@ PanelWindow {
                             border.color: fontCfg.borderMuted
                             border.width: 0
 
-                            scale: tileWrapper.isTargetActive ? 1.18 : (tileMouseArea.containsMouse ? 1.02 : 1.0)
+                            scale: tileWrapper.targetScale
                             Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
                             // --- TV ANTENNA ICON ---
@@ -277,8 +288,8 @@ PanelWindow {
                                     anchors.left: tvKnobsColumn.right
                                     anchors.leftMargin: 0
                                     
-                                transformOrigin: Item.Center
-                                scale: 1.0 / workspaceTile.scale
+                                    transformOrigin: Item.Center
+                                    scale: 1.0 / workspaceTile.scale
 
                                     Item { Layout.fillWidth: true }
 
@@ -351,6 +362,9 @@ PanelWindow {
                                     color: "transparent"
                                     radius: 4
                                     clip: true
+                                    
+                                    // Sits behind the high-level input overlay block cleanly
+                                    z: 10 
 
                                     property var workspaceWindows: overviewWindow.liveClientJson.filter(w => w.workspace.id === tileWrapper.workingWorkspace)
 
@@ -475,43 +489,16 @@ PanelWindow {
                                             }
                                         }
                                     }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: tileWrapper.activeHoverWindowIndex !== -1 ? Qt.PointingHandCursor : Qt.ArrowCursor
-
-                                        onPositionChanged: (mouse) => {
-                                            let foundIdx = -1;
-                                            for (let i = 0; i < windowRepeater.count; i++) {
-                                                let winItem = windowRepeater.itemAt(i);
-                                                if (winItem && winItem.visible) {
-                                                    if (mouse.x >= winItem.x && mouse.x <= (winItem.x + winItem.width) &&
-                                                        mouse.y >= winItem.y && mouse.y <= (winItem.y + winItem.height)) {
-                                                        foundIdx = i;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            tileWrapper.activeHoverWindowIndex = foundIdx;
-                                        }
-
-                                        onExited: {
-                                            tileWrapper.activeHoverWindowIndex = -1;
-                                        }
-
-                                        onClicked: (mouse) => {
-                                            Hyprland.dispatch(`hl.dsp.focus({ workspace = "${tileWrapper.workingWorkspace}" })`);
-                                            shellRoot.activeOverviewMonitor = "";
-                                        }
-                                    }
                                 }
                             }
 
+                            // High-level surface layer overlay mask blocks conflicting captures from filtering window spaces
                             MouseArea {
-                                id: tileMouseArea
+                                id: tileCardMouseArea
                                 anchors.fill: parent
                                 hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                z: 30 // Bumps on top of the tree coordinates to consistently process bounds
                                 onClicked: {
                                     Hyprland.dispatch(`hl.dsp.focus({ workspace = "${workingWorkspace}" })`);
                                     shellRoot.activeOverviewMonitor = "";
