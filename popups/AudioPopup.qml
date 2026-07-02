@@ -434,10 +434,6 @@ PanelWindow {
                                     opacity: model.isDefault ? 1.0 : 0.7
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
-
-                                    Component.onCompleted: {
-                                        fc.applyOutline(this, fc.overlayBackground)
-                                    }
                                 }
 
                                 Text {
@@ -447,10 +443,6 @@ PanelWindow {
                                     color: "#ffffff"
                                     opacity: 0.95
                                     visible: model.isDefault
-
-                                    Component.onCompleted: {
-                                        fc.applyOutline(this, fc.overlayBackground)
-                                    }
                                 }
                             }
                         }

@@ -213,8 +213,6 @@ PanelWindow {
                             anchors.bottom: parent.top
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottomMargin: -19
-                            
-                            Component.onCompleted: fontCfg.applySmoothing(this)
                         }
 
                         Item {
@@ -311,7 +309,6 @@ PanelWindow {
                                                 Layout.preferredHeight: tileWrapper.isTargetActive ? 20 : 16
                                                 Layout.alignment: Qt.AlignVCenter
                                                 fillMode: Image.PreserveAspectFit
-                                                
                                                 sourceSize.width: 32
                                                 sourceSize.height: 32
                                                 smooth: true

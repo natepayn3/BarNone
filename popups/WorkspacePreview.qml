@@ -168,8 +168,6 @@ Item {
             anchors.bottom: cardMainBody.top
             anchors.horizontalCenter: cardMainBody.horizontalCenter
             anchors.bottomMargin: -28
-            
-            Component.onCompleted: fc.applySmoothing(this)
         }
 
         Item {

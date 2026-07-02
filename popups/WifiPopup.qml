@@ -96,8 +96,6 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
                 rotation: -135
-                
-                Component.onCompleted: fc.applySmoothing(this)
             }
 
             // --- Standalone Right Side Wifi Icon ---
@@ -114,8 +112,6 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
                 rotation: 45
-                
-                Component.onCompleted: fc.applySmoothing(this)
             }
 
             // --- DECLARATIVE STATE ENGINE ---

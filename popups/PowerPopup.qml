@@ -69,8 +69,6 @@ PanelWindow {
                     origin.x: leftPowerIcon.width / 2
                     xScale: -1 
                 }
-                
-                Component.onCompleted: fc.applySmoothing(this)
             }
 
             // --- Standalone Right Side Power Icon ---
@@ -86,8 +84,6 @@ PanelWindow {
                 anchors.leftMargin: -10
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
-                
-                Component.onCompleted: fc.applySmoothing(this)
             }
 
             states: [
