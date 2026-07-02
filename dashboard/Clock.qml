@@ -1,4 +1,5 @@
 import QtQuick
+import "../../configs"
 
 Column {
     id: clockRoot
