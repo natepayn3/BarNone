@@ -158,24 +158,27 @@ RowLayout {
     
     Process {
         id: mediaFollower
-        command: ["playerctl", "metadata", "--follow", "--format", "{\\\"title\\\": \\\"{{title}}\\\", \\\"artist\\\": \\\"{{artist}}\\\", \\\"status\\\": \\\"{{status}}\\\", \\\"art\\\": \\\"{{mpris:artUrl}}\\\"}"]
+        // Put global flags first, then specify the metadata command verb at the end
+        command: ["playerctl", "--follow", "--format", '{"title": "{{title}}", "artist": "{{artist}}", "status": "{{status}}", "art": "{{mpris:artUrl}}"}', "metadata"]
         running: false
         stdout: SplitParser {
             onRead: (data) => {
                 try {
                     let parsed = JSON.parse(data.trim());
-                    if (parsed.status === "Stopped") {
+                    if (parsed.status === "Stopped" || !parsed.title) {
                         mediaRoot.mediaTitle = "Not Playing";
                         mediaRoot.mediaArtist = "---"; 
                         mediaRoot.mediaStatus = "Stopped";
                         mediaRoot.mediaArtUrl = "";
                     } else {
-                        mediaRoot.mediaTitle = parsed.title || "Unknown";
-                        mediaRoot.mediaArtist = parsed.artist || "Unknown";
-                        mediaRoot.mediaStatus = parsed.status || "Stopped";
+                        mediaRoot.mediaTitle = parsed.title;
+                        mediaRoot.mediaArtist = parsed.artist || "Unknown Artist";
+                        mediaRoot.mediaStatus = parsed.status;
                         mediaRoot.mediaArtUrl = parsed.art || "";
                     }
-                } catch(e) {}
+                } catch(e) {
+                    // Safely ignore standard parsing noise if playerctl emits blank newlines
+                }
             }
         }
     }
