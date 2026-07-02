@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Shapes
 import QtQuick.Layouts
 import Quickshell.Io
+import "../../configs"
 
 Item {
     id: ringsRoot
