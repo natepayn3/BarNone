@@ -233,7 +233,6 @@ PanelWindow {
                                     height: 30
                                     horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                                     rotation: -45
-                                    Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
                                 }
 
                                 Text {
@@ -245,7 +244,6 @@ PanelWindow {
                                     height: 30
                                     horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                                     rotation: 45
-                                    Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
                                 }
 
                                 Text {
@@ -253,7 +251,6 @@ PanelWindow {
                                     font { family: fontCfg.iconFont; pixelSize: 30 }
                                     color: fontCfg.textMuted
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
                                 }
                             }
 
