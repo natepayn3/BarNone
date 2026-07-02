@@ -97,13 +97,74 @@ Scope {
 
         Process {
             id: appFetcher
-            command: ["bash", "-c", "find /usr/share/applications ~/.local/share/applications -maxdepth 2 -name '*.desktop' 2>/dev/null | awk 'BEGIN { print \"[\"; c=0 } { name=\"\"; exec=\"\"; icon=\"\"; desc=\"\"; nshow=0; while ((getline line < $0) > 0) { if (line ~ /^Name=/ && name==\"\") name = substr(line, 6); if (line ~ /^Exec=/ && exec==\"\") exec = substr(line, 6); if (line ~ /^Icon=/ && icon==\"\") icon = substr(line, 6); if (line ~ /^Comment=/ && desc==\"\") desc = substr(line, 9); if (line ~ /^NoDisplay=true/) nshow=1 } close($0); if (name != \"\" && exec != \"\" && nshow==0) { gsub(/[\"\\\\]/, \"\", name); gsub(/[\"\\\\]/, \"\", exec); gsub(/[\"\\\\]/, \"\", icon); gsub(/[\"\\\\]/, \"\", desc); if (c > 0) print \",\"; printf \"{\\\"name\\\":\\\"%s\\\", \\\"exec\\\":\\\"%s\\\", \\\"icon\\\":\\\"%s\\\", \\\"desc\\\":\\\"%s\\\", \\\"path\\\":\\\"%s\\\"}\", name, exec, icon, desc, $0; c++ } } END { print \"]\" }'"] 
+            command: ["python", "-c", `
+import os, glob, json
+
+apps = []
+fallback_options = [
+    "/usr/share/pixmaps/archlinux-logo.png",
+    "/usr/share/icons/hicolor/48x48/apps/utilities-terminal.png"
+]
+fallback = next((p for p in fallback_options if os.path.isfile(p)), "")
+
+icon_dirs = [
+    os.path.expanduser("~/.local/share/icons"),
+    "/usr/share/icons/hicolor",
+    "/usr/share/icons/Papirus",
+    "/usr/share/icons",
+    "/usr/share/pixmaps"
+]
+
+for folder in ["/usr/share/applications", os.path.expanduser("~/.local/share/applications")]:
+    for path in glob.glob(os.path.join(folder, "**/*.desktop"), recursive=True):
+        if not os.path.isfile(path): continue
+        name, exec_cmd, icon, desc, nodisplay = "", "", "", "", False
+        try:
+            with open(path, "r", errors="ignore") as f:
+                for line in f:
+                    if line.startswith("Name=") and not name: name = line[5:].strip()
+                    elif line.startswith("Exec=") and not exec_cmd: exec_cmd = line[5:].strip()
+                    elif line.startswith("Icon=") and not icon: icon = line[5:].strip().split("?")[0]
+                    elif line.startswith("Comment=") and not desc: desc = line[8:].strip()
+                    elif line.startswith("NoDisplay=true"): nodisplay = True
+        except: continue
+
+        if nodisplay or not name or not exec_cmd: continue
+
+        resolved = fallback
+        if icon:
+            if icon.startswith("/"):
+                if os.path.isfile(icon): resolved = icon
+            else:
+                found = False
+                for base in icon_dirs:
+                    if found: break
+                    for root, dirs, files in os.walk(base):
+                        for ext in [".svg", ".png", ".xpm"]:
+                            p = os.path.join(root, icon + ext)
+                            if os.path.isfile(p):
+                                resolved = p
+                                found = True
+                                break
+                        if found: break
+
+        # Using escaped hex characters to completely avoid parsing side-effects in IDEs
+        apps.append({
+            "name": name.replace("\\x22", "").replace("\\\\", ""),
+            "exec": exec_cmd.replace("\\x22", "").replace("\\\\", ""),
+            "icon": "file://" + resolved if resolved and not resolved.startswith("file://") else "file://" + fallback,
+            "desc": desc.replace("\\x22", "").replace("\\\\", "") if desc else "Application",
+            "path": path
+        })
+
+print(json.dumps(apps))
+            `]
             running: false
             stdout: StdioCollector {
                 onStreamFinished: {
                     try {
                         launcherWindow.allApps = JSON.parse(this.text);
-                        launcherWindow.updateModel(); 
+                        launcherWindow.updateModel();
                     } catch(e) {}
                 }
             }
@@ -381,8 +442,6 @@ Scope {
                                     } 
 
                                     contentItem: RowLayout {
-                                        anchors.fill: parent
-                                        anchors.margins: 10 
                                         spacing: 12
 
                                         Image { 
@@ -390,10 +449,11 @@ Scope {
                                             Layout.preferredHeight: 28
                                             sourceSize.width: 56 
                                             sourceSize.height: 56
-                                            source: Quickshell.iconPath(modelData.icon !== "" ? modelData.icon : "application-x-executable") 
+                                            
+                                            source: modelData.icon ? modelData.icon : "file:///usr/share/icons/hicolor/scalable/apps/utilities-terminal.svg"
                                             fillMode: Image.PreserveAspectFit
                                             asynchronous: true
-                                        } 
+                                        }
 
                                         ColumnLayout {
                                             Layout.fillWidth: true 
@@ -426,10 +486,6 @@ Scope {
                                                     fc.applyOutline(this, fc.overlayBackground)
                                                 }
                                             }
-                                        }
-
-                                        Item {
-                                            Layout.fillWidth: true
                                         }
 
                                         Text {
