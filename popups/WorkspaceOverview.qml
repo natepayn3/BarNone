@@ -44,7 +44,6 @@ PanelWindow {
             overviewContent.focus = true;
             clientQueryProcess.running = true; 
             
-            // DYNAMIC CURSOR INITIALIZATION: Snap index tracking cleanly onto your focused workspace context immediately
             let initialIdx = overviewWindow.activeWorkspaceList.indexOf(Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1);
             if (initialIdx !== -1) {
                 overviewWindow.activeWorkspace = overviewWindow.activeWorkspaceList[initialIdx];
@@ -232,8 +231,7 @@ PanelWindow {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: 30
                                     height: 30
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
+                                    horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                                     rotation: -45
                                     Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
                                 }
@@ -245,8 +243,7 @@ PanelWindow {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: 30
                                     height: 30
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
+                                    horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                                     rotation: 45
                                     Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
                                 }
@@ -264,11 +261,14 @@ PanelWindow {
                             RowLayout {
                                 id: headerRow
                                 width: parent.width - tvKnobsColumn.width - 16
-                                height: 20
+                                height: 24 // Increased height slightly to accommodate dynamic expansion
                                 spacing: 16
                                 anchors.top: parent.top
                                 anchors.left: tvKnobsColumn.right
                                 anchors.leftMargin: 0
+                                
+                                transformOrigin: Item.Center
+                                scale: 1.0 / workspaceTile.scale
 
                                 Item { Layout.fillWidth: true }
 
@@ -281,11 +281,14 @@ PanelWindow {
                                         id: titleLabel
                                         text: "Workspace " + currentWsId
                                         font.family: overviewWindow.shellFont
-                                        font.pixelSize: 13
+                                        // FIXED: Boost font pixel size natively when card is active
+                                        font.pixelSize: tileWrapper.isTargetActive ? 16 : 13
                                         font.bold: true
                                         color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.textMuted
                                         anchors.verticalCenter: parent.verticalCenter
                                         Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
+                                        
+                                        Behavior on font.pixelSize { NumberAnimation { duration: 120 } }
                                     }
 
                                     RowLayout {
@@ -299,10 +302,17 @@ PanelWindow {
                                             delegate: Image {
                                                 visible: (modelData.class || "") !== "" && modelData.mapped
                                                 source: Quickshell.iconPath(getCleanIconName(modelData.class))
-                                                Layout.preferredWidth: 16
-                                                Layout.preferredHeight: 16
+                                                
+                                                // FIXED: Boost icon dimensions natively when active
+                                                Layout.preferredWidth: tileWrapper.isTargetActive ? 20 : 16
+                                                Layout.preferredHeight: tileWrapper.isTargetActive ? 20 : 16
                                                 Layout.alignment: Qt.AlignVCenter
                                                 fillMode: Image.PreserveAspectFit
+                                                
+                                                sourceSize.width: 32
+                                                sourceSize.height: 32
+                                                smooth: true
+                                                mipmap: true
                                             }
                                         }
                                     }
