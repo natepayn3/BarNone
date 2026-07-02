@@ -199,7 +199,7 @@ PanelWindow {
                   
                     Text {
                         anchors.centerIn: parent
-                        text: "music_cast"
+                        text: "sound_detection_loud_sound"
                         font.family: fc.iconFont
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
