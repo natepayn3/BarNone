@@ -41,7 +41,7 @@ PanelWindow {
         target: popupWindow.broadcaster
 
         function onBroadcast(summary, body) {
-            if (popupWindow.dndActive) { // 💡 Read from the local property tracking shellRoot
+            if (popupWindow.dndActive) {
                 return;
             }
 
@@ -81,8 +81,8 @@ PanelWindow {
                 id: bannerCard
                 anchors.fill: parent
                 radius: 16
-                color: Qt.rgba(0, 0, 0, 0.01) 
-                border.color: Qt.rgba(1, 1, 1, 0.05)
+                color: fc.trackBackground
+                border.color: fc.borderMuted
                 border.width: 1
 
                 RowLayout {
@@ -109,7 +109,7 @@ PanelWindow {
                             color: "#ffffff"
                            
                             Component.onCompleted: {
-                                fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                                fc.applyOutline(this, fc.overlayBackground)
                             }
                         }
                     }
@@ -130,21 +130,21 @@ PanelWindow {
                             Layout.fillWidth: true
  
                             Component.onCompleted: {
-                                fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                                fc.applyOutline(this, fc.overlayBackground)
                             }
                         }
 
                         Text {
                             id: bodyText
                             text: model.body
-                            color: Qt.rgba(1, 1, 1, 0.5)
+                            color: fc.textMuted
                             font.family: fc.mainFont
                             font.pixelSize: 15
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                  
                             Component.onCompleted: {
-                                fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+                                fc.applyOutline(this, fc.overlayBackground)
                             }
                         }
                     }

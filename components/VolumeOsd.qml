@@ -4,6 +4,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
+import "../configs"
 
 PanelWindow {
     id: volumeOsdWindow
@@ -39,11 +40,14 @@ PanelWindow {
         onTriggered: volumeOsdWindow.visible = false
     }
 
+    FontConfig { id: fc }
+
     Rectangle {
         id: pillCard
         anchors.fill: parent
-        color: Qt.rgba(0, 0, 0, 0.01)
-        border.width: 0
+        color: fc.trackBackground
+        border.color: fc.borderMuted
+        border.width: 1
         radius: 16
 
         RowLayout {
@@ -54,11 +58,13 @@ PanelWindow {
 
             Text {
                 text: volumeOsdWindow.isMuted ? "volume_off" : "volume_up"
-                font.family: "Material Symbols Outlined"
+                font.family: fc.iconFont
                 font.pixelSize: 32
-                color: Qt.rgba(1, 1, 1, 0.9)
-                style: Text.Outline
-                styleColor: Qt.rgba(0, 0, 0, 0.35)
+                color: "#ffffff"
+                
+                Component.onCompleted: {
+                    fc.applyOutline(this, fc.overlayBackground)
+                }
             }
 
             Slider {
@@ -82,7 +88,7 @@ PanelWindow {
                     Rectangle {
                         width: volumeSlider.visualPosition * parent.width
                         height: parent.height
-                        color: volumeOsdWindow.isMuted ? "#666666" : Qt.rgba(1, 1, 1, 0.85)
+                        color: volumeOsdWindow.isMuted ? fc.overlayForeground : "#ffffff"
                         radius: 3
                     }
                 }
@@ -93,20 +99,22 @@ PanelWindow {
                     implicitWidth: 18
                     implicitHeight: 18
                     radius: 9
-                    color: volumeOsdWindow.isMuted ? "#999999" : "#ffffff"
+                    color: volumeOsdWindow.isMuted ? fc.overlayForeground : "#ffffff"
                 }
             }
 
             Text {
                 text: volumeOsdWindow.isMuted ? "Muted" : volumeOsdWindow.systemVolume + "%"
                 color: "#ffffff"
-                font.family: "Google Sans Flex"
+                font.family: fc.mainFont
                 font.pixelSize: 18
                 font.weight: Font.Bold
-                style: Text.Outline
-                styleColor: Qt.rgba(0, 0, 0, 0.35)
                 Layout.minimumWidth: 54
                 horizontalAlignment: Text.AlignRight
+                
+                Component.onCompleted: {
+                    fc.applyOutline(this, fc.overlayBackground)
+                }
             }
         }
     }
@@ -126,10 +134,7 @@ PanelWindow {
 
                 let currentMutedState = cleaned.includes("[MUTED]");
                 
-                // FIXED: Using regex matching instead of parts[] extraction isolates 
-                // the numeric volume scale cleanly, safely filtering out Bluetooth codec decorators
                 let match = cleaned.match(/Volume:\s+([0-9.]+)/);
-                
                 if (match) {
                     let volVal = parseFloat(match[1]);
                     if (!isNaN(volVal)) {
@@ -139,7 +144,6 @@ PanelWindow {
 
                         volumeOsdWindow.systemVolume = newVol;
                         volumeOsdWindow.isMuted = currentMutedState;
-
                         if (volumeOsdWindow.bootComplete && (volChanged || muteChanged) && !shellRoot.audioPopupActive) {
                             volumeOsdWindow.visible = true;
                             osdTimer.restart();

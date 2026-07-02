@@ -71,7 +71,7 @@ PanelWindow {
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
             hoverEnabled: true
-        }
+         }
 
         Rectangle {
             id: inputStabilizerCapsule
@@ -82,8 +82,8 @@ PanelWindow {
  
             // Slide mechanics inverted for top anchor but timings matched perfectly to Dock
             y: trayHitbox.isPinned ? 6 : -height
-            color: shellConfig.colorBackground
-            border.color: trayHitbox.isPinned ? shellConfig.colorBorder : "transparent"
+            color: fc.trackBackground
+            border.color: trayHitbox.isPinned ? fc.borderMuted : "transparent"
             border.width: 1
             opacity: trayHitbox.isPinned ? 1.0 : 0.0
 
@@ -104,7 +104,7 @@ PanelWindow {
                     visible: trayWindow.totalItemCount === 0
                     width: 200
                     height: 64
-                    
+                  
                     Text {
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
@@ -113,8 +113,10 @@ PanelWindow {
                         font.family: fc.iconFont
                         font.pixelSize: 28
                         color: Qt.rgba(trayWindow.themeText.r, trayWindow.themeText.g, trayWindow.themeText.b, 0.35)
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        
+                        Component.onCompleted: {
+                            fc.applyOutline(this, fc.overlayBackground)
+                        }
                     }
                 }
 
@@ -133,6 +135,7 @@ PanelWindow {
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
       
+
                         Image {
                             anchors.centerIn: parent
                             width: 32
@@ -153,8 +156,8 @@ PanelWindow {
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.top: parent.bottom
                             anchors.topMargin: 12
-                            color: shellConfig.colorBackground || "#1e1e2e"
-                            border.color: shellConfig.colorBorder || "#313244"
+                            color: fc.trackBackground
+                            border.color: fc.borderMuted
                             border.width: 1
                             z: 100
 
@@ -165,6 +168,10 @@ PanelWindow {
                                 font.pointSize: 10
                                 font.weight: Font.Medium
                                 color: trayWindow.themeText
+                                
+                                Component.onCompleted: {
+                                    fc.applyOutline(this, fc.overlayBackground)
+                                }
                             }
                         }
 

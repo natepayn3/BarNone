@@ -21,19 +21,19 @@ PanelWindow {
 
     // --- ENGINES & CONFIG LINKAGES ---
     FontConfig { id: fontCfg }
-    ModuleConfig { id: config } // Added configuration module hook
+    ModuleConfig { id: config } 
 
     // --- SYSTEM THEME MATRIX & PREVIEW LAYER COMPATIBILITY ---
-    property color themeText: "#ffffff"
-    property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28)
-    property color hoverBorder: config.hoverBorder // Strictly using config for hoverBorder
+    property color themeText: shellConfig.themeText
+    property color themeAccent: shellConfig.themeAccent
+    property color hoverBorder: shellConfig.hoverBorder 
     
     readonly property string barPosition: "left"
-    property color colorBackground: Qt.rgba(0.06, 0.06, 0.1, 0.95)
-    property color colorBorder: Qt.rgba(1, 1, 1, 0.1)
+    property color colorBackground: fontCfg.trackBackground
+    property color colorBorder: fontCfg.borderMuted
    
-    property color colorAccent: Qt.rgba(0.6, 0.45, 0.9, 1.0)
-    property string shellFont: fontCfg.mainFont // Restored original tracking
+    property color colorAccent: shellConfig.themeAccent
+    property string shellFont: fontCfg.mainFont 
 
     anchors {
         left: true
@@ -114,7 +114,6 @@ PanelWindow {
             id: hotspotTrigger
             width: 14
             height: parent.height - 16
-          
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             hoverEnabled: true
@@ -142,13 +141,15 @@ PanelWindow {
                 id: visualColumnContainer
                 width: 58
                 height: visualColumn.implicitHeight + 20
-                radius: 12 // Restored hardcoded property
+                radius: 12 
      
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: dockHitbox.isPinned ? 5 : -75
 
-                color: Qt.rgba(0, 0, 0, 0.01)
+                color: fontCfg.trackBackground
+                border.color: dockHitbox.isPinned ? fontCfg.borderMuted : "transparent"
+                border.width: 1
 
                 Behavior on anchors.leftMargin {
                     NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
@@ -188,17 +189,15 @@ PanelWindow {
 
                             Text {
                                 anchors.centerIn: parent
-                                font.family: fontCfg.iconFont // Restored local FontConfig tracking
+                                font.family: fontCfg.iconFont 
                                 font.pixelSize: parent.isActive ? 28 : 22
-                                style: Text.Outline
-                                styleColor: Qt.rgba(0, 0, 0, 0.35)
-                           
+                      
                                 // Dynamic opacity matching the workspace state
                                 color: {
                                     if (!dockHitbox.isPinned) return "transparent";
                                     
                                     let baseColor = sideDockWindow.themeText;
-                                    let alpha = 0.25; // Default: Empty workspace
+                                    let alpha = 0.25; 
                                     
                                     if (parent.isActive) {
                                         alpha = 1.0;
@@ -211,7 +210,9 @@ PanelWindow {
                                 
                                 text: "counter_" + (wsId % 10)
                                
-                                Component.onCompleted: fontCfg.applySmoothing(this)
+                                Component.onCompleted: {
+                                    fontCfg.applyOutline(this, fontCfg.overlayBackground)
+                                }
                                 Behavior on font.pixelSize { NumberAnimation { duration: 140 } }
                                 Behavior on color { ColorAnimation { duration: 180 } }
                             }
@@ -237,13 +238,13 @@ PanelWindow {
                         Text {
                             anchors.centerIn: parent
                             text: "add"
-                            font.family: fontCfg.iconFont // Restored local FontConfig tracking
+                            font.family: fontCfg.iconFont 
                             font.pixelSize: 22
-                            style: Text.Outline
-                            styleColor: Qt.rgba(0, 0, 0, 0.35)
                             color: dockHitbox.isPinned ? Qt.rgba(sideDockWindow.themeText.r, sideDockWindow.themeText.g, sideDockWindow.themeText.b, 0.9) : "transparent"
                             
-                            Component.onCompleted: fontCfg.applySmoothing(this)
+                            Component.onCompleted: {
+                                fontCfg.applyOutline(this, fontCfg.overlayBackground)
+                            }
                             Behavior on color { ColorAnimation { duration: 180 } }
                         }
                     }
@@ -270,14 +271,14 @@ PanelWindow {
 
                         Text {
                             anchors.centerIn: parent
-                            font.family: fontCfg.iconFont // Restored local FontConfig tracking
+                            font.family: fontCfg.iconFont 
                             font.pixelSize: sideDockWindow.isSpecialActive ? 28 : 22
-                            style: Text.Outline
-                            styleColor: Qt.rgba(0, 0, 0, 0.35)
                             color: dockHitbox.isPinned ? Qt.rgba(sideDockWindow.themeText.r, sideDockWindow.themeText.g, sideDockWindow.themeText.b, 0.9) : "transparent"
                             text: sideDockWindow.isSpecialActive ? "family_star" : "kid_star"
                             
-                            Component.onCompleted: fontCfg.applySmoothing(this)
+                            Component.onCompleted: {
+                                fontCfg.applyOutline(this, fontCfg.overlayBackground)
+                            }
                             Behavior on font.pixelSize { NumberAnimation { duration: 140 } }
                             Behavior on color { ColorAnimation { duration: 180 } }
                         }

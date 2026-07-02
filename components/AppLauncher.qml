@@ -183,8 +183,6 @@ Scope {
                 }
             } 
 
-
-
             // --- DECLARATIVE STATE ENGINE ---
             states: [
                 State { 
@@ -272,8 +270,9 @@ Scope {
                                 font.family: "Google Sans Flex"
                                 font.pixelSize: 18
                                 font.weight: Font.Bold
-                                style: Text.Outline
-                                styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                Component.onCompleted: {
+                                    fc.applyOutline(this, fc.overlayBackground)
+                                }
                                 Layout.fillWidth: true
                             }
                             Item {
@@ -286,10 +285,11 @@ Scope {
                                 font.family: fc.iconFont
                                 font.pixelSize: 40
                                 font.weight: Font.ExtraLight
-                                style: Text.Outline
-                                styleColor: Qt.rgba(0, 0, 0, 0.35)
                                 verticalAlignment: Text.AlignVCenter
                                 Layout.preferredHeight: 18
+                                Component.onCompleted: {
+                                    fc.applyOutline(this, fc.overlayBackground)
+                                }
                             }
                         }
 
@@ -305,7 +305,7 @@ Scope {
                             placeholderTextColor: Qt.rgba(1, 1, 1, 0.3)
                             selectByMouse: true
                             verticalAlignment: TextInput.AlignVCenter 
-                            
+                                         
                             Component.onCompleted: fc.applySmoothing(this)
 
                             background: Rectangle { 
@@ -395,7 +395,7 @@ Scope {
                                                 elide: Text.ElideRight
                                                 
                                                 Component.onCompleted: {
-                                                    fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.45))
+                                                    fc.applyOutline(this, fc.overlayBackground)
                                                 }
                                             }
 
@@ -403,12 +403,12 @@ Scope {
                                                 text: modelData.desc !== "" ? modelData.desc : "Application" 
                                                 font.family: fc.mainFont
                                                 font.pixelSize: 14
-                                                color: Qt.rgba(1, 1, 1, 0.5) 
+                                                color: fc.textMuted
                                                 Layout.fillWidth: true
                                                 elide: Text.ElideRight
-                                              
+                                                                                              
                                                 Component.onCompleted: {
-                                                    fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.3))
+                                                    fc.applyOutline(this, fc.overlayBackground)
                                                 }
                                             }
                                         }
@@ -425,9 +425,9 @@ Scope {
                                             visible: appDelegate.isPinned 
                                             Layout.alignment: Qt.AlignVCenter
                                             Layout.rightMargin: 4
-                                         
+                                                                                 
                                             Component.onCompleted: {
-                                                fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.4))
+                                                fc.applyOutline(this, fc.overlayBackground)
                                             }
                                         }
                                     } 
@@ -449,7 +449,7 @@ Scope {
                                             let deltaY = Math.abs(currentY - lastScreenY);
                                             if (lastScreenX !== -1 && (deltaX > 2 || deltaY > 2)) {
                                                 if (appListView.currentIndex !== index) { 
-                                                    appListView.currentIndex = index;
+                                                   appListView.currentIndex = index;
                                                 }
                                             }
                                             
