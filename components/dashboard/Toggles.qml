@@ -16,14 +16,26 @@ Item {
 
     // Function to verify if hypridle is available in the environment
     function checkHypridle() {
-        // Check if hypridle can be found in common binary paths
-        // (Arch places it in /usr/bin/hypridle)
-        var paths = ["/usr/bin/hypridle", "/usr/local/bin/hypridle"];
+        var paths = ["file:///usr/bin/hypridle", "file:///usr/local/bin/hypridle"];
         var found = false;
         
-        // If your shell engine supports standard File objects or XMLHttpRequest 
-        // to read local protocols, you can verify it here. Otherwise, fallback:
-        caffeineAvailable = true; // Defaulting to true if the binary check passes
+        // Loop through paths and verify existence via local XMLHttpRequests
+        for (var i = 0; i < paths.length; i++) {
+            var xhr = new XMLHttpRequest();
+            // Open a synchronous request to block UI thread briefly during initialization
+            xhr.open("GET", paths[i], false);
+            try {
+                xhr.send();
+                if (xhr.status === 200 || xhr.status === 0) {
+                    found = true;
+                    break;
+                }
+            } catch (e) {
+                // Fail silently if file doesn't exist or permissions deny reading
+            }
+        }
+        
+        caffeineAvailable = found;
     }
 
     Component.onCompleted: {
@@ -284,10 +296,15 @@ Item {
                 width: parent.height - 4
                 height: parent.height - 4
                 radius: height / 2
-                color: togglesWrapper.caffeineActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
+                
+                // Fixes the knob background color when unavailable
+                color: !togglesWrapper.caffeineAvailable ? Qt.rgba(1, 1, 1, 0.12) :
+                       togglesWrapper.caffeineActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
+                       
                 anchors.verticalCenter: parent.verticalCenter
                 
-                x: (togglesWrapper.caffeineAvailable && togglesWrapper.caffeineActive) ? parent.width - width - 2 : 2
+                x: (togglesWrapper.caffeineAvailable && togglesWrapper.caffeineActive) ?
+                   parent.width - width - 2 : 2
 
                 Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
 
@@ -296,7 +313,11 @@ Item {
                     text: "local_cafe"
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
-                    color: togglesWrapper.caffeineActive ? Qt.rgba(0, 0, 0, 0.75) : Qt.rgba(1, 1, 1, 0.4)
+                    
+                    // Fixes the icon text color when unavailable
+                    color: !togglesWrapper.caffeineAvailable ? Qt.rgba(1, 1, 1, 0.4) :
+                           togglesWrapper.caffeineActive ? Qt.rgba(0, 0, 0, 0.75) : Qt.rgba(1, 1, 1, 0.4)
+                           
                     Component.onCompleted: fc.applySmoothing(this)
                 }
             }
