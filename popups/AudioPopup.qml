@@ -222,7 +222,8 @@ PanelWindow {
                             implicitWidth: 16
                             implicitHeight: 16
                             radius: 8
-                            color: volumeOsdWindow.isMuted ? fc.overlayForeground : "#ffffff"
+                            // Fixed typo from volumeOsdWindow.isMuted to audioPopupWindow.isMuted
+                            color: audioPopupWindow.isMuted ? fc.overlayForeground : "#ffffff"
                         }
                     }
                 }
