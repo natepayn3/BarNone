@@ -114,14 +114,20 @@ Item {
 
     function getCleanIconName(className) {
         if (!className) return "application-x-executable";
-        let lowerClass = className.toLowerCase().trim();
-        if (lowerClass.includes("chrome")) return "google-chrome";
-        if (lowerClass.includes("kitty")) return "kitty";
-        if (lowerClass.includes("terminal")) return "utilities-terminal";
-        if (lowerClass.includes("codium")) return "vscodium";
-        if (lowerClass.includes("code")) return "vscode";
-        if (lowerClass.includes("signal")) return "signal-desktop";
-        return lowerClass;
+        
+        // Clean up any image://icon/ protocols if they are being passed in
+        let scrubbed = className.replace("image://icon/", "").toLowerCase().trim();
+        
+        // Intercept desktop entry dot notation names
+        if (scrubbed.includes("remmina")) return "remmina";
+        if (scrubbed.includes("chrome")) return "google-chrome";
+        if (scrubbed.includes("kitty")) return "kitty";
+        if (scrubbed.includes("terminal")) return "utilities-terminal";
+        if (scrubbed.includes("codium")) return "vscodium";
+        if (scrubbed.includes("code")) return "vscode";
+        if (scrubbed.includes("signal")) return "signal-desktop";
+        
+        return scrubbed;
     }
 
     Item {
@@ -313,6 +319,10 @@ Item {
                                     Layout.preferredHeight: 16
                                     Layout.alignment: Qt.AlignVCenter
                                     fillMode: Image.PreserveAspectFit
+                                    sourceSize.width: 32
+                                    sourceSize.height: 32
+                                    smooth: true
+                                    mipmap: true
                                 }
                             }
                         }
