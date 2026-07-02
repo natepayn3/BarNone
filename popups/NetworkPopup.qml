@@ -6,6 +6,7 @@ import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
+import "../configs"
 
 PanelWindow {
     id: networkPopupWindow
