@@ -47,10 +47,6 @@ ShellRoot {
     AppLauncher { id: appLauncherModule }
     Wallpaper { id: wallpaperWindowModule; rootShell: shellRoot }
 
-    StatusTray {
-        id: topStatusTraySurface
-    }
-
     // Instantiated high up so that downstream dashboards can cleanly resolve it
     NotificationServer {
         id: notifServer
@@ -95,6 +91,14 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         VolumeOsd {
+            required property var modelData
+            screen: modelData
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+        StatusTray {
             required property var modelData
             screen: modelData
         }
