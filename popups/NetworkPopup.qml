@@ -51,6 +51,7 @@ PanelWindow {
     property real currentInstantSpeed: 0.0
     property int maxGraphPoints: 50
     property real maxGraphCeiling: 10 * 1024 * 1024 
+    property int graphTick: 0 // Tracks data ticks to force QML redraws
 
     FontConfig { id: fc }
     ModuleConfig { id: shellConfig }
@@ -82,6 +83,7 @@ PanelWindow {
             if (graphHistoryModel.count > networkPopupWindow.maxGraphPoints) {
                 graphHistoryModel.remove(0);
             }
+            networkPopupWindow.graphTick++; // Force dependency update
         }
     }
 
@@ -104,7 +106,6 @@ PanelWindow {
                     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB/s";
                     return (bytes / 1048576).toFixed(1) + " MB/s";
                 };
-
                 let textStr = data.trim();
                 if (!textStr) return;
                 
@@ -117,7 +118,6 @@ PanelWindow {
                 let rx = parseInt(parts[0]); 
                 let tx = parseInt(parts[8]); 
                 let now = Date.now();
-
                 if (networkPopupWindow.lastTime > 0) {
                     let elapsed = (now - networkPopupWindow.lastTime) / 1000;
                     if (elapsed > 0) {
@@ -302,22 +302,28 @@ PanelWindow {
 
                                 PathPolyline {
                                     path: {
+                                        let dummy = networkPopupWindow.graphTick; // Binds the tick dependency
                                         let pointsList = [];
                                         let totalPoints = graphHistoryModel.count;
                                         if (totalPoints < 2) return pointsList;
-
+                                        
                                         let availableWidth = sparklineCanvasWrapper.width;
                                         let availableHeight = sparklineCanvasWrapper.height;
 
-                                        pointsList.push(Qt.point(0, availableHeight));
+                                        // Auto-scale peak calculation window
+                                        let activeHighestPeak = 1024 * 1024;
+                                        for (let j = 0; j < totalPoints; j++) {
+                                            let val = graphHistoryModel.get(j).speedValue;
+                                            if (val > activeHighestPeak) activeHighestPeak = val;
+                                        }
 
+                                        pointsList.push(Qt.point(0, availableHeight));
                                         for (let i = 0; i < totalPoints; i++) {
                                             let nodeValue = graphHistoryModel.get(i).speedValue;
-                                            let clampedValue = Math.min(nodeValue, networkPopupWindow.maxGraphCeiling);
-                                            let scaleRatio = clampedValue / networkPopupWindow.maxGraphCeiling;
                                             
+                                            let scaleRatio = nodeValue / activeHighestPeak;
                                             let coordX = (i / (networkPopupWindow.maxGraphPoints - 1)) * availableWidth;
-                                            let coordY = availableHeight - (scaleRatio * availableHeight);
+                                            let coordY = availableHeight - (scaleRatio * (availableHeight - 4));
                                             pointsList.push(Qt.point(coordX, coordY));
                                         }
 
@@ -338,6 +344,7 @@ PanelWindow {
 
                                 PathPolyline {
                                     path: {
+                                        let dummy = networkPopupWindow.graphTick; // Binds the tick dependency
                                         let pointsList = [];
                                         let totalPoints = graphHistoryModel.count;
                                         if (totalPoints < 2) return pointsList;
@@ -345,13 +352,18 @@ PanelWindow {
                                         let availableWidth = sparklineCanvasWrapper.width;
                                         let availableHeight = sparklineCanvasWrapper.height;
 
+                                        let activeHighestPeak = 1024 * 1024;
+                                        for (let j = 0; j < totalPoints; j++) {
+                                            let val = graphHistoryModel.get(j).speedValue;
+                                            if (val > activeHighestPeak) activeHighestPeak = val;
+                                        }
+
                                         for (let i = 0; i < totalPoints; i++) {
                                             let nodeValue = graphHistoryModel.get(i).speedValue;
-                                            let clampedValue = Math.min(nodeValue, networkPopupWindow.maxGraphCeiling);
-                                            let scaleRatio = clampedValue / networkPopupWindow.maxGraphCeiling;
                                             
+                                            let scaleRatio = nodeValue / activeHighestPeak;
                                             let coordX = (i / (networkPopupWindow.maxGraphPoints - 1)) * availableWidth;
-                                            let coordY = availableHeight - (scaleRatio * availableHeight);
+                                            let coordY = availableHeight - (scaleRatio * (availableHeight - 4));
                                             pointsList.push(Qt.point(coordX, coordY));
                                         }
                                         return pointsList;
@@ -401,13 +413,8 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: networkPopupWindow.activeVpnName === profileName 
-                                    ? Qt.rgba(1, 1, 1, 0.14) 
-                                    : (parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent")
-                                
-                                border.color: networkPopupWindow.activeVpnName === profileName 
-                                    ? Qt.rgba(1, 1, 1, 0.35) 
-                                    : (parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent")
+                                color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(1, 1, 1, 0.14) : (parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent")
+                                border.color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(1, 1, 1, 0.35) : (parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent")
                                 border.width: 1
                             }
 
@@ -460,18 +467,8 @@ PanelWindow {
                                     id: delBtn
                                     flat: true
                                     implicitWidth: 28; implicitHeight: 28
-                                    background: Rectangle { 
-                                        color: delBtn.hovered ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
-                                        radius: 6 
-                                    }
-                                    contentItem: Text { 
-                                        text: "delete"
-                                        font.family: "Material Symbols Outlined"
-                                        font.pixelSize: 16
-                                        color: delBtn.hovered ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4)
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter 
-                                    }
+                                    background: Rectangle { color: delBtn.hovered ? Qt.rgba(1, 1, 1, 0.1) : "transparent"; radius: 6 }
+                                    contentItem: Text { text: "delete"; font.family: "Material Symbols Outlined"; font.pixelSize: 16; color: delBtn.hovered ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                                     onClicked: networkPopupWindow.deleteProfile(profileName)
                                 }
                             }
