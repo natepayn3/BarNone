@@ -288,7 +288,7 @@ PanelWindow {
                         id: sparklineCanvasWrapper
                         Layout.fillWidth: true
                         height: 44
-                        visible: graphHistoryModel.count > 1
+                        //visible: graphHistoryModel.count > 1
 
                         Shape {
                             anchors.fill: parent
