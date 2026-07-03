@@ -6,7 +6,7 @@ import "../../configs"
 
 RowLayout {
     id: mediaRoot
-    spacing: 14
+    spacing: mediaStatus !== "Stopped" ? 14 : 0 // Remove spacing if hidden to maintain perfect centering
 
     property string mediaTitle: "Not Playing"
     property string mediaArtist: "---"
@@ -20,9 +20,10 @@ RowLayout {
     // --- THUMBNAIL ART CONTAINER WITH ROUNDED EDGES ---
     Item {
         id: artContainer
-        width: 75
+        width: visible ? 75 : 0 // Collapse width when hidden
         height: 75
         Layout.alignment: Qt.AlignVCenter
+        visible: mediaRoot.mediaStatus !== "Stopped" // Hide entirely when not playing
 
         Image {
             id: artImage
@@ -158,7 +159,6 @@ RowLayout {
     
     Process {
         id: mediaFollower
-        // Put global flags first, then specify the metadata command verb at the end
         command: ["playerctl", "--follow", "--format", '{"title": "{{title}}", "artist": "{{artist}}", "status": "{{status}}", "art": "{{mpris:artUrl}}"}', "metadata"]
         running: false
         stdout: SplitParser {
