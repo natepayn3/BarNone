@@ -53,33 +53,60 @@ PanelWindow {
     property color themeAccent: shellConfig.themeAccent
     property color hoverBorder: shellConfig.hoverBorder
 
+    property var openWindowClasses: []
+
     property int activeHoverIndex: -1
 
+    // --- UPDATED RESOLVE FUNCTION ---
     function resolveAppName(modelData) {
-        if (modelData.title && modelData.title.trim() !== "") {
-            return modelData.title;
-        }
+        let baseTitle = "Application";
+        let rawId = (modelData.id || "").toLowerCase();
+        let cleanId = rawId.split('.').pop(); // e.g., "signal"
 
-        let rawId = modelData.id || "";
-        if (rawId !== "") {
-            let baseName = rawId.split('.').pop();
-            let words = baseName.split(/[-_\s]+/);
-            
+        if (modelData.title && modelData.title.trim() !== "") {
+            baseTitle = modelData.title;
+        } else if (cleanId !== "") {
+            let words = cleanId.split(/[-_\s]+/);
             let cleanWords = words.filter(word => {
                 let lower = word.toLowerCase();
-                return lower !== "status" && 
-                    lower !== "icon" && 
-                    lower !== "tray" && 
-                    lower !== "" && 
-                    !lower.match(/^\d+$/);
+                return lower !== "status" && lower !== "icon" && lower !== "tray" && lower !== "" && !lower.match(/^\d+$/);
             });
             
-            let finalName = cleanWords.length > 0 ? cleanWords.join(" ") : baseName.replace(/[-_]/g, " ");
-            return finalName.replace(/\b\w/g, c => c.toUpperCase());
+            let finalName = cleanWords.length > 0 ? cleanWords.join(" ") : cleanId.replace(/[-_]/g, " ");
+            baseTitle = finalName.replace(/\b\w/g, c => c.toUpperCase());
         }
 
-        return "Application";
+        // --- BACKGROUND SERVICE CHECK ---
+        // Look for a match in our running window classes array
+        let isWindowOpen = openWindowClasses.some(cls => {
+            return cls.includes(cleanId) || cleanId.includes(cls);
+        });
+
+        if (!isWindowOpen && cleanId !== "") {
+            return baseTitle + " - service";
+        }
+
+        return baseTitle;
     }
+
+    function updateOpenWindows() {
+        // Queries hyprctl for client classes in a raw flat format
+        let proc = Quickshell.createProcess(["hyprctl", "clients", "-j"]);
+        proc.onFinished = function(stdout, stderr, exitCode) {
+            if (exitCode === 0) {
+                try {
+                    let clients = JSON.parse(stdout);
+                    // Extract and lowercase all open window classes
+                    openWindowClasses = clients.map(c => (c.class || "").toLowerCase());
+                } catch(e) {
+                    openWindowClasses = [];
+                }
+            }
+        };
+        proc.start();
+    }
+
+    onMenuActiveChanged: if (menuActive) updateOpenWindows();
 
     MouseArea {
         id: trayHitbox
