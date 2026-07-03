@@ -4,7 +4,6 @@ import QtQuick.Controls
 import Quickshell
 import QtQuick.Shapes
 import Quickshell.Io
-import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import "../../configs"
 
@@ -15,18 +14,22 @@ PanelWindow {
 
     property var notificationModel: notifServer.trackedNotifications
 
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "quickshell-resource-dashboard"
-    WlrLayershell.keyboardFocus: WlrLayershell.None
+    Component.onCompleted: {
+        if (this.WlrLayershell != null) {
+            this.WlrLayershell.layer = WlrLayer.Top;
+            this.WlrLayershell.namespace = "quickshell-resource-dashboard";
+            this.WlrLayershell.keyboardFocus = WlrLayershell.None;
+        }
+    }
+
     exclusionMode: ExclusionMode.Ignore
 
     anchors {
-        top: true
-        bottom: true
         right: true
     }
 
     implicitWidth: 450
+    implicitHeight: bgCard.height 
     color: "transparent"
 
     property bool wifiAvailable: false
@@ -139,7 +142,6 @@ PanelWindow {
             id: bgCard
             width: 360
             height: contentGrid.implicitHeight + (contentGrid.anchors.margins * 2)
-            anchors.verticalCenter: parent.verticalCenter
             
             x: dashHitbox.isPinned ? (parent.width - width - 16) : parent.width
             opacity: dashHitbox.isPinned ? 1.0 : 0.0
