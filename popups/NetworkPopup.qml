@@ -442,6 +442,7 @@ PanelWindow {
                                 Switch {
                                     id: itemToggleSwitch
                                     checked: networkPopupWindow.activeVpnName === profileName
+                                    // Inline comment: Route back to the local connection execution handler
                                     onClicked: networkPopupWindow.toggleProfileState(profileName, checked)
                                     
                                     implicitWidth: 42
@@ -451,9 +452,7 @@ PanelWindow {
                                         width: 42
                                         height: 24
                                         radius: 12
-                                        // Inline comment: Softer background fill when active
-                                        color: itemToggleSwitch.checked ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
-                                        // Inline comment: Directly extract RGB from primary text and drop alpha to 0.5 for a faded text-colored outline
+                                        color: itemToggleSwitch.checked ? shellConfig.themeAccent : "transparent"
                                         border.color: Qt.rgba(fc.textPrimary.r, fc.textPrimary.g, fc.textPrimary.b, 0.5)
                                         border.width: 2
 
@@ -465,7 +464,6 @@ PanelWindow {
                                             radius: 7
                                             color: fc.textPrimary
                                             
-                                            // Inline comment: Smooth quad sliding animation
                                             Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                                         }
                                     }
@@ -621,7 +619,24 @@ PanelWindow {
     Process { id: vpnStateExecutor; running: false; onExited: vpnListPopulator.running = true }
     Process { id: vpnImporter; running: false; onExited: vpnListPopulator.running = true }
 
+    Process {
+        id: vpnNotificationProc
+        running: false
+        function fire(title, message) {
+            command = ["notify-send", "-a", "Network Manager", title, message]
+            running = false
+            running = true
+        }
+    }
+    
     function toggleProfileState(profileName, itemChecked) {
+        // Inline comment: Execute shell notifications when the interface toggles
+        if (itemChecked) {
+            vpnNotificationProc.fire("VPN Connected", "Connected to " + profileName)
+        } else {
+            vpnNotificationProc.fire("VPN Disconnected", "Disconnected from " + profileName)
+        }
+
         vpnStateExecutor.command = itemChecked 
             ? ["nmcli", "connection", "up", "id", profileName]
             : ["nmcli", "connection", "down", "id", profileName];
