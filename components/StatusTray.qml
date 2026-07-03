@@ -136,7 +136,7 @@ PanelWindow {
 
                 Item {
                     id: placeholderContainer
-                    visible: trayWindow.totalItemCount === 0
+                    visible: trayRepeater.count === 0
                     width: 64
                     height: 64
                   
@@ -156,6 +156,7 @@ PanelWindow {
                 }
 
                 Repeater {
+                    id: trayRepeater
                     model: SystemTray.items.values
                     delegate: Item {
                         id: trayItemDelegate
