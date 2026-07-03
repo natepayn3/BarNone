@@ -269,9 +269,9 @@ Item {
                             Repeater {
                                 model: viewportFrame.workspaceWindows
                                 delegate: Image {
-                                    // Use native model object wrapper mappings cleanly
-                                    visible: (modelData.wayland.appId || "") !== ""
-                                    source: Quickshell.iconPath(getCleanIconName(modelData.wayland.appId))
+                                    // Guarded against null wayland objects (e.g. XWayland clients)
+                                    visible: modelData.wayland && (modelData.wayland.appId || "") !== ""
+                                    source: Quickshell.iconPath(getCleanIconName(modelData.wayland ? modelData.wayland.appId : ""))
                                     Layout.preferredWidth: 16
                                     Layout.preferredHeight: 16
                                     Layout.alignment: Qt.AlignVCenter
@@ -370,10 +370,11 @@ Item {
                         delegate: Rectangle {
                             id: windowDelegate
                         
-                            x: Math.round((modelData.lastIpcObject.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX)
-                            y: Math.round((modelData.lastIpcObject.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY)
-                            width: Math.max(4, Math.round(modelData.lastIpcObject.size[0] * viewportFrame.scaleX))
-                            height: Math.max(4, Math.round(modelData.lastIpcObject.size[1] * viewportFrame.scaleY))
+                            // Safe layout bindings checking if lastIpcObject.at/size properties exist before evaluating
+                            x: modelData.lastIpcObject && modelData.lastIpcObject.at ? Math.round((modelData.lastIpcObject.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX) : 0
+                            y: modelData.lastIpcObject && modelData.lastIpcObject.at ? Math.round((modelData.lastIpcObject.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY) : 0
+                            width: modelData.lastIpcObject && modelData.lastIpcObject.size ? Math.max(4, Math.round(modelData.lastIpcObject.size[0] * viewportFrame.scaleX)) : 4
+                            height: modelData.lastIpcObject && modelData.lastIpcObject.size ? Math.max(4, Math.round(modelData.lastIpcObject.size[1] * viewportFrame.scaleY)) : 4
                             visible: true
                             
                             color: viewportFrame.isTargetActiveWorkspace ?
@@ -412,8 +413,8 @@ Item {
                                 z: 10
 
                                 Text {
-                                    text: (modelData.lastIpcObject.title && modelData.lastIpcObject.title.trim() !== "" && modelData.lastIpcObject.title !== "~") ?
-                                        modelData.lastIpcObject.title : (modelData.lastIpcObject.class || "")
+                                    text: (modelData.lastIpcObject && modelData.lastIpcObject.title && modelData.lastIpcObject.title.trim() !== "" && modelData.lastIpcObject.title !== "~") ?
+                                        modelData.lastIpcObject.title : ((modelData.lastIpcObject && modelData.lastIpcObject.class) || "")
                                     font.family: previewRoot.shellFont
                                     font.pixelSize: 8;
                                     font.bold: true 
