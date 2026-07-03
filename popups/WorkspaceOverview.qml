@@ -162,340 +162,347 @@ PanelWindow {
             onTapped: { shellRoot.activeOverviewMonitor = ""; }
         }
 
-        // --- GRID / WRAPPING CONTAINER MATRIX ---
-        Item {
+        // --- INDEPENDENT HORIZONTAL ROW STACK ---
+        ColumnLayout {
             id: positioningContainer
             anchors.centerIn: parent
-            
-            width: overviewLayoutGrid.implicitWidth
-            height: overviewLayoutGrid.implicitHeight
+            spacing: 64
 
-            Grid {
-                id: overviewLayoutGrid
-                anchors.centerIn: parent
-                spacing: 64
-                
-                // Explicit horizontal flow with automatic row wrap limit rules
-                columns: overviewWindow.activeWorkspaceList.length > 4 ? 4 : overviewWindow.activeWorkspaceList.length
-                flow: Grid.LeftToRight
+            Repeater {
+                model: {
+                    let items = overviewWindow.activeWorkspaceList;
+                    let chunks = [];
+                    let chunkSize = 4; 
+                    for (let i = 0; i < items.length; i += chunkSize) {
+                        chunks.push(items.slice(i, i + chunkSize));
+                    }
+                    return chunks;
+                }
 
-                Repeater {
-                    model: overviewWindow.activeWorkspaceList
+                // Standard Row forces horizontal positioning without cell/column sizing constraints
+                delegate: Row {
+                    id: rowContainer
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 64
 
-                    delegate: Item {
-                        id: tileWrapper
-                        property int currentWsId: modelData
-                        property int workingWorkspace: currentWsId  
-                        property bool isTargetActive: overviewWindow.activeWorkspace === workingWorkspace
-                        property int activeHoverWindowIndex: -1
+                    Repeater {
+                        model: modelData 
 
-                        property bool isVerticalWorkspace: viewportFrame.calculatedBounds.isVertical
-                        property real targetScale: isTargetActive ? 1.18 : (tileCardMouseArea.containsMouse ? 1.02 : 1.0)
+                        delegate: Item {
+                            id: tileWrapper
+                            property int currentWsId: modelData
+                            property int workingWorkspace: currentWsId  
+                            property bool isTargetActive: overviewWindow.activeWorkspace === workingWorkspace
+                            property int activeHoverWindowIndex: -1
 
-                        // Reverts to the stable workspace layout bounds inherited from your horizontal source code
-                        width: Math.round(viewportFrame.width + 74)
-                        height: 440
+                            property bool isVerticalWorkspace: viewportFrame.calculatedBounds.isVertical
+                            property real targetScale: isTargetActive ? 1.18 : (tileCardMouseArea.containsMouse ? 1.02 : 1.0)
 
-                        Rectangle {
-                            id: workspaceTile
-                            width: parent.width
-                            height: tileWrapper.isVerticalWorkspace ? 440 : 300
-                            anchors.centerIn: parent 
-                            
-                            radius: overviewWindow.radiusValue
-                            z: tileWrapper.isTargetActive ? 3 : 2
+                            // Clean dimensions inherited directly from your stable horizontal layout bounds
+                            width: Math.round(viewportFrame.width + 74)
+                            height: 440
 
-                            color: overviewWindow.colorBackground
-                            border.color: fontCfg.borderMuted
-                            border.width: 0
-
-                            scale: tileWrapper.targetScale
-                            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
-
-                            // --- TV ANTENNA ICON ---
-                            Text {
-                                id: antennaIcon
-                                text: "network_ping"
-                                font {
-                                    family: fontCfg.iconFont
-                                    pixelSize: 54
-                                }
-                                color: fontCfg.overlayBackground
-                                styleColor: overviewWindow.colorBackground
-                                z: 1
+                            Rectangle {
+                                id: workspaceTile
+                                width: parent.width
+                                height: tileWrapper.isVerticalWorkspace ? 440 : 300
+                                anchors.centerIn: parent 
                                 
-                                anchors.bottom: parent.top
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.bottomMargin: -19
-                            }
+                                radius: overviewWindow.radiusValue
+                                z: tileWrapper.isTargetActive ? 3 : 2
 
-                            Item {
-                                anchors.fill: parent
-                                anchors.margins: 14
+                                color: overviewWindow.colorBackground
+                                border.color: fontCfg.borderMuted
+                                border.width: 0
 
-                                // --- TV KNOBS (INSIDE WINDOW, LEFT SIDE) ---
-                                Column {
-                                    id: tvKnobsColumn
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 4
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: 24
-                                    spacing: 14
+                                scale: tileWrapper.targetScale
+                                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-                                    Text {
-                                        text: "clock_loader_10"
-                                        font { family: fontCfg.iconFont; pixelSize: 30 }
-                                        color: fontCfg.textMuted
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        width: 30
-                                        height: 30
-                                        horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-                                        rotation: -45
+                                // --- TV ANTENNA ICON ---
+                                Text {
+                                    id: antennaIcon
+                                    text: "network_ping"
+                                    font {
+                                        family: fontCfg.iconFont
+                                        pixelSize: 54
                                     }
-
-                                    Text {
-                                        text: "clock_loader_10"
-                                        font { family: fontCfg.iconFont; pixelSize: 30 }
-                                        color: fontCfg.textMuted
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        width: 30
-                                        height: 30
-                                        horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-                                        rotation: 45
-                                    }
-
-                                    Text {
-                                        text: "density_small"
-                                        font { family: fontCfg.iconFont; pixelSize: 30 }
-                                        color: fontCfg.textMuted
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                    }
+                                    color: fontCfg.overlayBackground
+                                    styleColor: overviewWindow.colorBackground
+                                    z: 1
+                                    
+                                    anchors.bottom: parent.top
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.bottomMargin: -19
                                 }
 
-                                // --- HEADER ROW (TITLE + RUNNING APPS) ---
-                                RowLayout {
-                                    id: headerRow
-                                    width: parent.width - tvKnobsColumn.width - 16
-                                    height: 24 
-                                    spacing: 16
-                                    anchors.top: parent.top
-                                    anchors.left: tvKnobsColumn.right
-                                    anchors.leftMargin: 0
-                                    
-                                    transformOrigin: Item.Center
-                                    scale: 1.0 / workspaceTile.scale
+                                Item {
+                                    anchors.fill: parent
+                                    anchors.margins: 14
 
-                                    Item { Layout.fillWidth: true }
-
-                                    Row {
-                                        id: centeredContent
-                                        spacing: 16
-                                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                    // --- TV KNOBS (INSIDE WINDOW, LEFT SIDE) ---
+                                    Column {
+                                        id: tvKnobsColumn
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 4
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 24
+                                        spacing: 14
 
                                         Text {
-                                            id: titleLabel
-                                            text: "Workspace " + workingWorkspace
-                                            font.family: overviewWindow.shellFont
-                                            font.pixelSize: tileWrapper.isTargetActive ? 16 : 13
-                                            font.bold: true
-                                            color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.textMuted
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
+                                            text: "clock_loader_10"
+                                            font { family: fontCfg.iconFont; pixelSize: 30 }
+                                            color: fontCfg.textMuted
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            width: 30
+                                            height: 30
+                                            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+                                            rotation: -45
+                                        }
+
+                                        Text {
+                                            text: "clock_loader_10"
+                                            font { family: fontCfg.iconFont; pixelSize: 30 }
+                                            color: fontCfg.textMuted
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            width: 30
+                                            height: 30
+                                            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+                                            rotation: 45
+                                        }
+
+                                        Text {
+                                            text: "density_small"
+                                            font { family: fontCfg.iconFont; pixelSize: 30 }
+                                            color: fontCfg.textMuted
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+                                    }
+
+                                    // --- HEADER ROW (TITLE + RUNNING APPS) ---
+                                    RowLayout {
+                                        id: headerRow
+                                        width: parent.width - tvKnobsColumn.width - 16
+                                        height: 24 
+                                        spacing: 16
+                                        anchors.top: parent.top
+                                        anchors.left: tvKnobsColumn.right
+                                        anchors.leftMargin: 0
+                                        
+                                        transformOrigin: Item.Center
+                                        scale: 1.0 / workspaceTile.scale
+
+                                        Item { Layout.fillWidth: true }
+
+                                        Row {
+                                            id: centeredContent
+                                            spacing: 16
+                                            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                                            Text {
+                                                id: titleLabel
+                                                text: "Workspace " + workingWorkspace
+                                                font.family: overviewWindow.shellFont
+                                                font.pixelSize: tileWrapper.isTargetActive ? 16 : 13
+                                                font.bold: true
+                                                color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.textMuted
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
+                                                
+                                                Behavior on font.pixelSize { NumberAnimation { duration: 120 } }
+                                            }
+
+                                            RowLayout {
+                                                id: iconContainerRow
+                                                height: parent.height
+                                                spacing: 8
+                                                anchors.verticalCenter: parent.verticalCenter
                                             
-                                            Behavior on font.pixelSize { NumberAnimation { duration: 120 } }
-                                        }
-
-                                        RowLayout {
-                                            id: iconContainerRow
-                                            height: parent.height
-                                            spacing: 8
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        
-                                            Repeater {
-                                                model: viewportFrame.workspaceWindows
-                                                delegate: Image {
-                                                    visible: (modelData.class || "") !== "" && modelData.mapped
-                                                    source: Quickshell.iconPath(getCleanIconName(modelData.class))
-                                                    
-                                                    Layout.preferredWidth: tileWrapper.isTargetActive ? 20 : 16
-                                                    Layout.preferredHeight: tileWrapper.isTargetActive ? 20 : 16
-                                                    Layout.alignment: Qt.AlignVCenter
-                                                    fillMode: Image.PreserveAspectFit
-                                                    sourceSize.width: 32
-                                                    sourceSize.height: 32
-                                                    smooth: true
-                                                    mipmap: true
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    Item { Layout.fillWidth: true }
-                                }
-
-                                Rectangle {
-                                    id: headerDivider
-                                    width: parent.width - tvKnobsColumn.width - 16
-                                    height: 1
-                                    color: overviewWindow.colorBorder
-                                    anchors.top: headerRow.bottom
-                                    anchors.topMargin: 4
-                                    anchors.left: tvKnobsColumn.right
-                                    anchors.leftMargin: 16
-                                }
-
-                                // --- VIEWPORT STREAM ENGINE ---
-                                Rectangle {
-                                    id: viewportFrame
-                                    
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    anchors.horizontalCenterOffset: (tvKnobsColumn.width + 20) / 2
-                                    
-                                    anchors.top: headerDivider.bottom
-                                    anchors.topMargin: 8
-                                    anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: 2
-                                    color: "transparent"
-                                    radius: 4
-                                    clip: true
-                                    
-                                    z: 10 
-
-                                    property var workspaceWindows: overviewWindow.liveClientJson.filter(w => w.workspace.id === tileWrapper.workingWorkspace)
-
-                                    property var calculatedBounds: {
-                                        if (!workspaceWindows || workspaceWindows.length === 0) {
-                                            let mWidth = 1920, mHeight = 1080, mX = 0, mY = 0;
-                                            let wsObj = Hyprland.workspaces.values.find(w => w.id === tileWrapper.workingWorkspace);
-                                            let targetMonitor = wsObj ? wsObj.monitor : Hyprland.activeMonitor;
-                                            if (targetMonitor) {
-                                                let scale = targetMonitor.scale > 0 ? targetMonitor.scale : 1.0;
-                                                mWidth = Math.round(targetMonitor.width / scale);
-                                                mHeight = Math.round(targetMonitor.height / scale);
-                                                mX = targetMonitor.x;
-                                                mY = targetMonitor.y;
-                                            }
-                                            return { "w": mWidth, "h": mHeight, "isVertical": mHeight > mWidth, "originX": mX, "originY": mY };
-                                        }
-
-                                        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                                        for (let i = 0; i < workspaceWindows.length; i++) {
-                                            let win = workspaceWindows[i];
-                                            if (!win.at || !win.size) continue;
-                                            if (win.at[0] < minX) minX = win.at[0];
-                                            if (win.at[1] < minY) minY = win.at[1];
-                                            if ((win.at[0] + win.size[0]) > maxX) maxX = win.at[0] + win.size[0];
-                                            if ((win.at[1] + win.size[1]) > maxY) maxY = win.at[1] + win.size[1];
-                                        }
-
-                                        let spanX = maxX - minX;
-                                        let spanY = maxY - minY;
-                                        let verticalDetected = spanY > spanX;
-                                        
-                                        let normW = verticalDetected ? 1080 : 1920;
-                                        let normH = verticalDetected ? 1920 : 1080;
-                                        
-                                        if (spanX > 0 && Math.abs(spanX - normW) > 100) normW = spanX;
-                                        if (spanY > 0 && Math.abs(spanY - normH) > 100) normH = spanY;
-                                        return { "w": normW, "h": normH, "isVertical": verticalDetected, "originX": minX, "originY": minY };
-                                    }
-
-                                    height: workspaceTile.height - headerRow.height - 24
-                                    width: Math.round(height * (calculatedBounds.w / calculatedBounds.h))
-                                    
-                                    property real scaleX: width / calculatedBounds.w
-                                    property real scaleY: height / calculatedBounds.h
-
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        color: fontCfg.overlayBackground
-                                        radius: 4
-                                        z: 1
-                                    }
-
-                                    Repeater {
-                                        id: windowRepeater
-                                        model: viewportFrame.workspaceWindows
-                                        delegate: Rectangle {
-                                            id: windowDelegate
-                                        
-                                            x: Math.round((modelData.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX)
-                                            y: Math.round((modelData.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY)
-                                            width: Math.max(4, Math.round(modelData.size[0] * viewportFrame.scaleX))
-                                            height: Math.max(4, Math.round(modelData.size[1] * viewportFrame.scaleY))
-                                            visible: modelData.mapped
-                                            z: 2
-                                            
-                                            color: tileWrapper.isTargetActive ? 
-                                                Qt.rgba(fontCfg.textPrimary.r, fontCfg.textPrimary.g, fontCfg.textPrimary.b, 0.15) : fontCfg.overlayBackground
-                                            border.color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.borderMuted
-                                            border.width: 0
-                                            radius: 4
-
-                                            property var wlToplevel: {
-                                                if (!modelData || !modelData.address) return null;
-                                                
-                                                let tracker = clientQueryProcess.running; 
-                                                let targetAddr = modelData.address.trim().toLowerCase();
-                                                
-                                                let match = Hyprland.toplevels.values.find(t => {
-                                                    if (!t.lastIpcObject || !t.lastIpcObject.address) return false;
-                                                    return t.lastIpcObject.address.trim().toLowerCase() === targetAddr;
-                                                });
-                                                if (match && match.wayland) return match.wayland;
-                                                return null;
-                                            }
-
-                                            Loader {
-                                                anchors.fill: parent
-                                                anchors.margins: 1
-                                                active: windowDelegate.wlToplevel !== null
-                                                asynchronous: true 
-                                                
-                                                opacity: status === Loader.Ready ? 1.0 : 0.0
-                                                Behavior on opacity { NumberAnimation { duration: 150 } }
-
-                                                sourceComponent: Component {
-                                                    ScreencopyView {
-                                                        captureSource: windowDelegate.wlToplevel
-                                                        live: true
-                                                        paintCursor: false
+                                                Repeater {
+                                                    model: viewportFrame.workspaceWindows
+                                                    delegate: Image {
+                                                        visible: (modelData.class || "") !== "" && modelData.mapped
+                                                        source: Quickshell.iconPath(getCleanIconName(modelData.class))
+                                                        
+                                                        Layout.preferredWidth: tileWrapper.isTargetActive ? 20 : 16
+                                                        Layout.preferredHeight: tileWrapper.isTargetActive ? 20 : 16
+                                                        Layout.alignment: Qt.AlignVCenter
+                                                        fillMode: Image.PreserveAspectFit
+                                                        sourceSize.width: 32
+                                                        sourceSize.height: 32
+                                                        smooth: true
+                                                        mipmap: true
                                                     }
                                                 }
                                             }
+                                        }
 
-                                            Rectangle {
-                                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                                                height: Math.min(16, parent.height * 0.3)
-                                                color: tileWrapper.isTargetActive ? fontCfg.textPrimary : "#cc11111b"
-                                                visible: parent.height > 24 && parent.width > 40
-                                                radius: 2
+                                        Item { Layout.fillWidth: true }
+                                    }
 
-                                                Text {
-                                                    text: (modelData.class || "")
-                                                    font.family: fontCfg.mainFont
-                                                    font.pixelSize: 8
-                                                    font.bold: true 
-                                                    color: tileWrapper.isTargetActive ? "#000000" : fontCfg.textPrimary
-                                                    anchors.centerIn: parent
-                                                    width: parent.width - 4
-                                                    elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
+                                    Rectangle {
+                                        id: headerDivider
+                                        width: parent.width - tvKnobsColumn.width - 16
+                                        height: 1
+                                        color: overviewWindow.colorBorder
+                                        anchors.top: headerRow.bottom
+                                        anchors.topMargin: 4
+                                        anchors.left: tvKnobsColumn.right
+                                        anchors.leftMargin: 16
+                                    }
+
+                                    // --- VIEWPORT STREAM ENGINE ---
+                                    Rectangle {
+                                        id: viewportFrame
+                                        
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.horizontalCenterOffset: (tvKnobsColumn.width + 20) / 2
+                                        
+                                        anchors.top: headerDivider.bottom
+                                        anchors.topMargin: 8
+                                        anchors.bottom: parent.bottom
+                                        anchors.bottomMargin: 2
+                                        color: "transparent"
+                                        radius: 4
+                                        clip: true
+                                        
+                                        z: 10 
+
+                                        property var workspaceWindows: overviewWindow.liveClientJson.filter(w => w.workspace.id === tileWrapper.workingWorkspace)
+
+                                        property var calculatedBounds: {
+                                            if (!workspaceWindows || workspaceWindows.length === 0) {
+                                                let mWidth = 1920, mHeight = 1080, mX = 0, mY = 0;
+                                                let wsObj = Hyprland.workspaces.values.find(w => w.id === tileWrapper.workingWorkspace);
+                                                let targetMonitor = wsObj ? wsObj.monitor : Hyprland.activeMonitor;
+                                                if (targetMonitor) {
+                                                    let scale = targetMonitor.scale > 0 ? targetMonitor.scale : 1.0;
+                                                    mWidth = Math.round(targetMonitor.width / scale);
+                                                    mHeight = Math.round(targetMonitor.height / scale);
+                                                    mX = targetMonitor.x;
+                                                    mY = targetMonitor.y;
+                                                }
+                                                return { "w": mWidth, "h": mHeight, "isVertical": mHeight > mWidth, "originX": mX, "originY": mY };
+                                            }
+
+                                            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                                            for (let i = 0; i < workspaceWindows.length; i++) {
+                                                let win = workspaceWindows[i];
+                                                if (!win.at || !win.size) continue;
+                                                if (win.at[0] < minX) minX = win.at[0];
+                                                if (win.at[1] < minY) minY = win.at[1];
+                                                if ((win.at[0] + win.size[0]) > maxX) maxX = win.at[0] + win.size[0];
+                                                if ((win.at[1] + win.size[1]) > maxY) maxY = win.at[1] + win.size[1];
+                                            }
+
+                                            let spanX = maxX - minX;
+                                            let spanY = maxY - minY;
+                                            let verticalDetected = spanY > spanX;
+                                            
+                                            let normW = verticalDetected ? 1080 : 1920;
+                                            let normH = verticalDetected ? 1920 : 1080;
+                                            
+                                            if (spanX > 0 && Math.abs(spanX - normW) > 100) normW = spanX;
+                                            if (spanY > 0 && Math.abs(spanY - normH) > 100) normH = spanY;
+                                            return { "w": normW, "h": normH, "isVertical": verticalDetected, "originX": minX, "originY": minY };
+                                        }
+
+                                        height: workspaceTile.height - headerRow.height - 24
+                                        width: Math.round(height * (calculatedBounds.w / calculatedBounds.h))
+                                        
+                                        property real scaleX: width / calculatedBounds.w
+                                        property real scaleY: height / calculatedBounds.h
+
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: fontCfg.overlayBackground
+                                            radius: 4
+                                            z: 1
+                                        }
+
+                                        Repeater {
+                                            id: windowRepeater
+                                            model: viewportFrame.workspaceWindows
+                                            delegate: Rectangle {
+                                                id: windowDelegate
+                                            
+                                                x: Math.round((modelData.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX)
+                                                y: Math.round((modelData.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY)
+                                                width: Math.max(4, Math.round(modelData.size[0] * viewportFrame.scaleX))
+                                                height: Math.max(4, Math.round(modelData.size[1] * viewportFrame.scaleY))
+                                                visible: modelData.mapped
+                                                z: 2
+                                                
+                                                color: tileWrapper.isTargetActive ? 
+                                                    Qt.rgba(fontCfg.textPrimary.r, fontCfg.textPrimary.g, fontCfg.textPrimary.b, 0.15) : fontCfg.overlayBackground
+                                                border.color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.borderMuted
+                                                border.width: 0
+                                                radius: 4
+
+                                                property var wlToplevel: {
+                                                    if (!modelData || !modelData.address) return null;
+                                                    
+                                                    let tracker = clientQueryProcess.running; 
+                                                    let targetAddr = modelData.address.trim().toLowerCase();
+                                                    
+                                                    let match = Hyprland.toplevels.values.find(t => {
+                                                        if (!t.lastIpcObject || !t.lastIpcObject.address) return false;
+                                                        return t.lastIpcObject.address.trim().toLowerCase() === targetAddr;
+                                                    });
+                                                    if (match && match.wayland) return match.wayland;
+                                                    return null;
+                                                }
+
+                                                Loader {
+                                                    anchors.fill: parent
+                                                    anchors.margins: 1
+                                                    active: windowDelegate.wlToplevel !== null
+                                                    asynchronous: true 
+                                                    
+                                                    opacity: status === Loader.Ready ? 1.0 : 0.0
+                                                    Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                                                    sourceComponent: Component {
+                                                        ScreencopyView {
+                                                            captureSource: windowDelegate.wlToplevel
+                                                            live: true
+                                                            paintCursor: false
+                                                        }
+                                                    }
+                                                }
+
+                                                Rectangle {
+                                                    anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                                    height: Math.min(16, parent.height * 0.3)
+                                                    color: tileWrapper.isTargetActive ? fontCfg.textPrimary : "#cc11111b"
+                                                    visible: parent.height > 24 && parent.width > 40
+                                                    radius: 2
+
+                                                    Text {
+                                                        text: (modelData.class || "")
+                                                        font.family: fontCfg.mainFont
+                                                        font.pixelSize: 8
+                                                        font.bold: true 
+                                                        color: tileWrapper.isTargetActive ? "#000000" : fontCfg.textPrimary
+                                                        anchors.centerIn: parent
+                                                        width: parent.width - 4
+                                                        elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            MouseArea {
-                                id: tileCardMouseArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                z: 30 
-                                onClicked: {
-                                    Hyprland.dispatch(`hl.dsp.focus({ workspace = "${workingWorkspace}" })`);
-                                    shellRoot.activeOverviewMonitor = "";
+                                MouseArea {
+                                    id: tileCardMouseArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    z: 30 
+                                    onClicked: {
+                                        Hyprland.dispatch(`hl.dsp.focus({ workspace = "${workingWorkspace}" })`);
+                                        shellRoot.activeOverviewMonitor = "";
+                                    }
                                 }
                             }
                         }
