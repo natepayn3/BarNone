@@ -154,20 +154,6 @@ PanelWindow {
             border.width: 1
             radius: shellConfig.radiusValue
 
-            // --- Standalone Top App Icon ---
-            Text {
-                id: topDashboardIcon
-                text: "drag_handle"
-                font.family: fc.iconFont
-                font.pixelSize: 50
-                color: shellConfig.colorBackground
-                styleColor: shellConfig.colorBackground
-                anchors.bottom: parent.top
-                anchors.bottomMargin: -20
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: 0
-            }
-
             // --- Standalone Left App Icon ---
             Text {
                 id: leftDashboardIcon
@@ -180,20 +166,6 @@ PanelWindow {
                 anchors.rightMargin: -2
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
-            }
-
-            // --- Standalone Bottom App Icon ---
-            Text {
-                id: bottomDashboardIcon
-                text: "drag_handle"
-                font.family: fc.iconFont
-                font.pixelSize: 50
-                color: shellConfig.colorBackground
-                styleColor: shellConfig.colorBackground
-                anchors.top: parent.bottom
-                anchors.topMargin: -20
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: 0
             }
 
             HoverHandler { id: cardHover }
