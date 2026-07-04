@@ -15,7 +15,7 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrLayershell.OnDemand
     WlrLayershell.exclusionMode: WlrLayershell.Ignore
 
-    color: fontCfg.trackBackground
+    color: overviewWindow.colorBackground
 
     anchors {
         top: true
@@ -226,7 +226,7 @@ PanelWindow {
                                         family: fontCfg.iconFont
                                         pixelSize: 54
                                     }
-                                    color: fontCfg.overlayBackground
+                                    color: overviewWindow.colorBackground
                                     styleColor: overviewWindow.colorBackground
                                     z: 1
                                     
