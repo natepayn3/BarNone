@@ -43,6 +43,7 @@ PanelWindow {
     property color themeAccent: shellConfig.themeAccent
     property color hoverBorder: shellConfig.hoverBorder
 
+    Settings { id: settingsOverlay; visible: false }
     BluetoothPopup { id: bluetoothOverlay; visible: false }
     AudioPopup { id: audioOverlay; visible: false }
     WifiPopup { id: wifiOverlay; visible: false }
@@ -61,6 +62,7 @@ PanelWindow {
                                    (dockWindow.launcherModule && 
                                     dockWindow.launcherModule.active && 
                                     dockWindow.launcherModule.targetScreen === dockWindow.screen) ||
+                                   settingsOverlay.visible ||
                                    bluetoothOverlay.visible ||
                                    audioOverlay.visible ||
                                    wifiOverlay.visible ||
@@ -106,9 +108,9 @@ PanelWindow {
                 spacing: 16
                 anchors.centerIn: parent
 
-                // --- BUTTON 0: APP LAUNCHER ---
+                // --- BUTTON 0: APPEARANCE ENGINE (SETTINGS) ---
                 Item {
-                    id: btnLauncher
+                    id: btnSettings
                     width: 64
                     height: 64
                     
@@ -117,6 +119,32 @@ PanelWindow {
                         radius: 12
                         color: dockHitbox.activeHoverIndex === 0 ? (dockWindow.themeAccent || "transparent") : "transparent"
                         border.color: dockHitbox.activeHoverIndex === 0 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        border.width: 1
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+                  
+                    Text {
+                        anchors.centerIn: parent
+                        text: "settings"
+                        font.family: fc.iconFont
+                        font.pixelSize: 32
+                        color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
+                        Behavior on color { ColorAnimation { duration: 180 } }
+                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
+                    }
+                }
+
+                // --- BUTTON 1: APP LAUNCHER ---
+                Item {
+                    id: btnLauncher
+                    width: 64
+                    height: 64
+                    
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 12
+                        color: dockHitbox.activeHoverIndex === 1 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 1 ? (dockWindow.hoverBorder || "transparent") : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -132,7 +160,7 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 1: WALLPAPER PICKER ---
+                // --- BUTTON 2: WALLPAPER PICKER ---
                 Item {
                     id: btnWallpaper
                     width: 64
@@ -141,8 +169,8 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: dockHitbox.activeHoverIndex === 1 ? (dockWindow.themeAccent || "transparent") : "transparent"
-                        border.color: dockHitbox.activeHoverIndex === 1 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        color: dockHitbox.activeHoverIndex === 2 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 2 ? (dockWindow.hoverBorder || "transparent") : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -158,7 +186,7 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 2: SCREENSHOT UTILITY ---
+                // --- BUTTON 3: SCREENSHOT UTILITY ---
                 Item {
                     id: btnScreenshot
                     width: 64
@@ -167,8 +195,8 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: dockHitbox.activeHoverIndex === 2 ? (dockWindow.themeAccent || "transparent") : "transparent"
-                        border.color: dockHitbox.activeHoverIndex === 2 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        color: dockHitbox.activeHoverIndex === 3 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 3 ? (dockWindow.hoverBorder || "transparent") : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -184,7 +212,7 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 3: AUDIO OUTPUT ROUTER ---
+                // --- BUTTON 4: AUDIO OUTPUT ROUTER ---
                 Item {
                     id: btnAudio
                     width: 64
@@ -193,8 +221,8 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: dockHitbox.activeHoverIndex === 3 ? (dockWindow.themeAccent || "transparent") : "transparent"
-                        border.color: dockHitbox.activeHoverIndex === 3 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        color: dockHitbox.activeHoverIndex === 4 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 4 ? (dockWindow.hoverBorder || "transparent") : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -210,7 +238,7 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 4: BLUETOOTH CONFIG ---
+                // --- BUTTON 5: BLUETOOTH CONFIG ---
                 Item {
                     id: btnBluetooth
                     width: 64
@@ -219,8 +247,8 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: dockHitbox.activeHoverIndex === 4 ? (dockWindow.themeAccent || "transparent") : "transparent"
-                        border.color: dockHitbox.activeHoverIndex === 4 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        color: dockHitbox.activeHoverIndex === 5 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 5 ? (dockWindow.hoverBorder || "transparent") : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -236,7 +264,7 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 5: WIFI CONFIG ---
+                // --- BUTTON 6: WIFI CONFIG ---
                 Item {
                     id: btnWifi
                     width: 64
@@ -245,8 +273,8 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: dockHitbox.activeHoverIndex === 5 ? (dockWindow.themeAccent || "transparent") : "transparent"
-                        border.color: dockHitbox.activeHoverIndex === 5 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        color: dockHitbox.activeHoverIndex === 6 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 6 ? (dockWindow.hoverBorder || "transparent") : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -262,7 +290,7 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 6: NETWORK THROUGHPUT / VPN ---
+                // --- BUTTON 7: NETWORK THROUGHPUT / VPN ---
                 Item {
                     id: btnNetwork
                     width: 64
@@ -271,8 +299,8 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: dockHitbox.activeHoverIndex === 6 ? (dockWindow.themeAccent || "transparent") : "transparent"
-                        border.color: dockHitbox.activeHoverIndex === 6 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        color: dockHitbox.activeHoverIndex === 7 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 7 ? (dockWindow.hoverBorder || "transparent") : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -288,7 +316,7 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 7: POWER TRIGGER MODULE ---
+                // --- BUTTON 8: POWER TRIGGER MODULE ---
                 Item {
                     id: btnPower
                     width: 64
@@ -297,8 +325,8 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: dockHitbox.activeHoverIndex === 7 ? (dockWindow.themeAccent || "transparent") : "transparent"
-                        border.color: dockHitbox.activeHoverIndex === 7 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        color: dockHitbox.activeHoverIndex === 8 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 8 ? (dockWindow.hoverBorder || "transparent") : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -326,7 +354,7 @@ PanelWindow {
                     let totalCellWidth = 80;
                     let calculatedIndex = Math.floor(adjustedX / totalCellWidth);
                     let localX = adjustedX % totalCellWidth;
-                    if (calculatedIndex >= 0 && calculatedIndex <= 7 && localX <= 64 && adjustedX >= 0) {
+                    if (calculatedIndex >= 0 && calculatedIndex <= 8 && localX <= 64 && adjustedX >= 0) {
                         dockHitbox.activeHoverIndex = calculatedIndex;
                     } else {
                         dockHitbox.activeHoverIndex = -1;
@@ -337,31 +365,34 @@ PanelWindow {
 
                 onClicked: (mouse) => {
                     if (dockHitbox.activeHoverIndex === 0) {
+                        if (!settingsOverlay.visible) settingsOverlay.visible = true;
+                        else settingsOverlay.animateActive = false;
+                    } else if (dockHitbox.activeHoverIndex === 1) {
                         if (dockWindow.launcherModule.active) {
                             dockWindow.launcherModule.active = false;
                         } else {
                             dockWindow.launcherModule.presentOnScreen(dockWindow.screen);
                         }
-                    } else if (dockHitbox.activeHoverIndex === 1) {
+                    } else if (dockHitbox.activeHoverIndex === 2) {
                         if (dockWindow.wallpaperModule) {
                             dockWindow.wallpaperModule.active = !dockWindow.wallpaperModule.active;
                         }
-                    } else if (dockHitbox.activeHoverIndex === 2) {
+                    } else if (dockHitbox.activeHoverIndex === 3) {
                         dockHitbox.isPinned = false;
                         Quickshell.execDetached(["fish", "-c", "sleep 0.1; and grim -g (slurp) -t ppm - | satty --filename -"]);
-                    } else if (dockHitbox.activeHoverIndex === 3) {
+                    } else if (dockHitbox.activeHoverIndex === 4) {
                         if (!audioOverlay.visible) audioOverlay.visible = true;
                         else audioOverlay.animateActive = false;
-                    } else if (dockHitbox.activeHoverIndex === 4) {
+                    } else if (dockHitbox.activeHoverIndex === 5) {
                         if (!bluetoothOverlay.visible) bluetoothOverlay.visible = true;
                         else bluetoothOverlay.animateActive = false;
-                    } else if (dockHitbox.activeHoverIndex === 5) {
+                    } else if (dockHitbox.activeHoverIndex === 6) {
                         if (!wifiOverlay.visible) wifiOverlay.visible = true;
                         else wifiOverlay.animateActive = false;
-                    } else if (dockHitbox.activeHoverIndex === 6) {
+                    } else if (dockHitbox.activeHoverIndex === 7) {
                         if (!networkOverlay.visible) networkOverlay.visible = true;
                         else networkOverlay.animateActive = false;
-                    } else if (dockHitbox.activeHoverIndex === 7) {
+                    } else if (dockHitbox.activeHoverIndex === 8) {
                         if (!powerOverlay.visible) powerOverlay.visible = true;
                         else powerOverlay.animateActive = false;
                     }
