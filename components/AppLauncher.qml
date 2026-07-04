@@ -326,6 +326,8 @@ print(json.dumps(apps))
                 color: "transparent"
                 radius: 16
                 antialiasing: true
+                border.color: launcherModuleRoot.themeBorder
+                border.width: 1
             }
 
             Rectangle {
