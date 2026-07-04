@@ -38,6 +38,12 @@ PanelWindow {
     property var masterFontList: Qt.fontFamilies()
     property var filteredFontList: masterFontList
 
+    onShowFontPickerChanged: {
+        if (showFontPicker) {
+            fontSearchField.forceActiveFocus();
+        }
+    }
+
     FontConfig { id: fc }
 
     Timer {
@@ -149,7 +155,7 @@ PanelWindow {
             anchors.bottomMargin: 100
             anchors.horizontalCenter: parent.horizontalCenter
            
-            color: fc.trackBackground
+            color: shellConfig.colorBackground
             border.color: fc.borderMuted
             border.width: 1
             radius: shellConfig.radiusValue
@@ -229,16 +235,28 @@ PanelWindow {
                         Layout.fillWidth: true
                         from: 0.0
                         to: 1.0
-                        value: 0.7
 
+                        // 🎨 Update the running memory state smoothly while dragging
                         onValueChanged: {
-                            shellConfig.themeBackground = Qt.rgba(0.4, 0.4, 0.4, value);
+                            shellConfig.colorBackground = Qt.rgba(0.12, 0.12, 0.14, value);
                         }
 
-                        onMoved: {
-                            let alpha = value.toFixed(2);
-                            let path = settingsPopupWindow.getAbsoluteConfigPath();
-                            writeConfigValue(`sed -i -E 's/(property color themeBackground:).*/\\1 Qt.rgba(0.4, 0.4, 0.4, ${alpha})/' ${path}`);
+                        // 💾 Only write to disk when you release the mouse handle
+                        onPressedChanged: {
+                            if (!pressed) { // False means the user just let go
+                                let alpha = value.toFixed(2);
+                                let path = settingsPopupWindow.getAbsoluteConfigPath();
+                                writeConfigValue(`sed -i -E 's/(property color colorBackground:).*/\\1 Qt.rgba(0.12, 0.12, 0.14, ${alpha})/' ${path}`);
+                            }
+                        }
+
+                        Component.onCompleted: {
+                            let currentAlpha = shellConfig.colorBackground.a;
+                            if (currentAlpha !== undefined && !isNaN(currentAlpha)) {
+                                alphaSlider.value = currentAlpha;
+                            } else {
+                                alphaSlider.value = 0.7; // Fallback default if config is missing
+                            }
                         }
 
                         background: Rectangle {
@@ -363,7 +381,7 @@ PanelWindow {
                     Layout.fillWidth: true
                     
                     Text {
-                        text: "Select System Font"
+                        text: "Select System Font:"
                         color: shellConfig.themeText
                         font.family: shellConfig.shellFont
                         font.pixelSize: 16
