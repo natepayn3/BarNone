@@ -160,6 +160,34 @@ PanelWindow {
             border.width: 0
             radius: shellConfig.radiusValue
 
+            Text {
+                id: leftDisplayIcon
+                text: "palette"
+                font.family: fc.iconFont
+                font.pixelSize: 150
+                color: shellConfig.colorBackground
+                styleColor: shellConfig.colorBackground
+             
+                anchors.right: parent.left
+                anchors.rightMargin: -5
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 0
+            }
+
+            Text {
+                id: rightDisplayIcon
+                text: "palette"
+                font.family: fc.iconFont
+                font.pixelSize: 150
+                color: shellConfig.colorBackground
+                styleColor: shellConfig.colorBackground
+
+                anchors.left: parent.right
+                anchors.leftMargin: -5
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 0
+            }
+
             states: [
                 State {
                     name: "hidden"
