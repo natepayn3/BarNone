@@ -47,7 +47,7 @@ PanelWindow {
         onTriggered: outsideDismiss.forceActiveFocus()
     }
 
-    // 🌟 Fixed: Function layout guarantees safe absolute engine resolution across all child nodes
+    // 🌟 Function layout guarantees safe absolute engine resolution across all child nodes
     function getAbsoluteConfigPath() {
         let currentDir = Qt.resolvedUrl(".").toString().replace("file://", "");
         return `${currentDir}../configs/ModuleConfig.qml`;
@@ -88,7 +88,12 @@ PanelWindow {
                 let s = localPickerColor.hsvSaturation;
                 let v = localPickerColor.hsvValue;
                 
-                currentHue = isNaN(h) || h === undefined ? 0.0 : h;
+                // 🎨 Only touch currentHue if the color actually has color saturation.
+                // If it's grayscale (s === 0), leave currentHue exactly as it is.
+                if (s > 0 && h !== undefined && !isNaN(h) && h >= 0) {
+                    currentHue = h > 1.0 ? (h / 360.0) : h;
+                }
+                
                 currentSat = isNaN(s) || s === undefined ? 0.0 : s;
                 currentVal = isNaN(v) || v === undefined ? 1.0 : v;
             } catch(e) {
@@ -129,7 +134,19 @@ PanelWindow {
         Rectangle {
             id: bgCard
             width: shellConfig.panelWidth
-            height: 400
+            
+            // 🌟 Live Morphing Height tracking explicit structural implicit height properties safely
+            height: settingsPopupWindow.showFontPicker 
+                ? (fontPickerLayout.implicitHeight + 44)
+                : (settingsPopupWindow.showColorPicker ? (colorPickerLayout.implicitHeight + 44) : (mainLayout.implicitHeight + 44))
+            
+            Behavior on height {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.OutCubic
+                }
+            }
+
             transformOrigin: Item.Center
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 100
@@ -168,7 +185,7 @@ PanelWindow {
                             NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationOut; easing.type: Easing.InBack; easing.amplitude: shellConfig.springIn }
                             NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityOut; easing.type: Easing.InQuad }
                         }
-                        ScriptAction { script: settingsPopupWindow.visible = false } 
+                        ScriptAction { script: settingsPopupWindow.visible = false }
                     }
                 }
             ]
@@ -200,7 +217,7 @@ PanelWindow {
                     spacing: 2
 
                     Text {
-                        text: "Background Opacity: " + Math.round(alphaSlider.value * 100) + "%"
+                        text: "Opacity: " + Math.round(alphaSlider.value * 100) + "%"
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.7)
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
@@ -212,7 +229,7 @@ PanelWindow {
                         Layout.fillWidth: true
                         from: 0.0
                         to: 1.0
-                        value: 0.7 
+                        value: 0.7
 
                         onValueChanged: {
                             shellConfig.themeBackground = Qt.rgba(0.4, 0.4, 0.4, value);
@@ -220,7 +237,6 @@ PanelWindow {
 
                         onMoved: {
                             let alpha = value.toFixed(2);
-                            // 🌟 Fixed: Invokes the layout root path resolution loop safely
                             let path = settingsPopupWindow.getAbsoluteConfigPath();
                             writeConfigValue(`sed -i -E 's/(property color themeBackground:).*/\\1 Qt.rgba(0.4, 0.4, 0.4, ${alpha})/' ${path}`);
                         }
@@ -259,7 +275,7 @@ PanelWindow {
                     spacing: 4
 
                     Text {
-                        text: "Active Font Family"
+                        text: "Font Family"
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
@@ -296,7 +312,7 @@ PanelWindow {
                     spacing: 4
 
                     Text {
-                        text: "Active Font Color"
+                        text: "Font Color"
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
@@ -333,8 +349,6 @@ PanelWindow {
                         }
                     }
                 }
-
-                Item { Layout.fillHeight: true }
             }
 
             // --- VIEW 2: TRANSITION SYSTEM FONT PICKER WINDOW ---
@@ -366,7 +380,7 @@ PanelWindow {
                         implicitHeight: 28
                         background: Rectangle { 
                             color: backButton.hovered ? fc.overlayBackground : fc.trackBackground
-                            radius: 4 
+                            radius: 4
                             border.color: backButton.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
                         }
                         contentItem: Text { 
@@ -405,7 +419,7 @@ PanelWindow {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredHeight: 300
                     color: Qt.rgba(0, 0, 0, 0.15)
                     radius: 8
                     border.color: fc.borderMuted
@@ -466,6 +480,9 @@ PanelWindow {
                 anchors.margins: 22
                 spacing: 14
                 visible: settingsPopupWindow.showColorPicker
+                
+                // 🌟 Fixed: Lock down a solid baseline metric configuration for the container panel
+                implicitHeight: 334
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -488,7 +505,7 @@ PanelWindow {
                         implicitHeight: 28
                         background: Rectangle { 
                             color: colorBackButton.hovered ? fc.overlayBackground : fc.trackBackground
-                            radius: 4 
+                            radius: 4
                             border.color: colorBackButton.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
                         }
                         contentItem: Text { 
@@ -515,7 +532,7 @@ PanelWindow {
 
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredHeight: 220
                     spacing: 16
 
                     Rectangle {
@@ -572,57 +589,66 @@ PanelWindow {
                             function updateCoordinates(mouse) {
                                 let normX = Math.max(0.0, Math.min(1.0, mouse.x / width))
                                 let normY = Math.max(0.0, Math.min(1.0, mouse.y / height))
-                                settingsPopupWindow.currentSat = normX
-                                settingsPopupWindow.currentVal = 1.0 - normY
-                                settingsPopupWindow.updateColorFromHSV()
+                                settingsPopupWindow.currentSat = normX;
+                                settingsPopupWindow.currentVal = 1.0 - normY;
+                                settingsPopupWindow.updateColorFromHSV();
                             }
                             onPressed: (mouse) => updateCoordinates(mouse)
                             onPositionChanged: (mouse) => updateCoordinates(mouse)
                         }
                     }
 
-                    Rectangle {
-                        id: hueBarTrack
+                    // Replace the old 'id: hueBarTrack' Rectangle block with this:
+                    Item {
                         Layout.preferredWidth: 24
-                        Layout.fillHeight: true
-                        radius: 6
-                        border.color: fc.borderMuted
-
-                        gradient: Gradient {
-                            orientation: Gradient.Vertical
-                            GradientStop { position: 0.0; color: "#ff0000" }
-                            GradientStop { position: 0.17; color: "#ffff00" }
-                            GradientStop { position: 0.33; color: "#00ff00" }
-                            GradientStop { position: 0.5; color: "#00ffff" }
-                            GradientStop { position: 0.67; color: "#0000ff" }
-                            GradientStop { position: 0.83; color: "#ff00ff" }
-                            GradientStop { position: 1.0; color: "#ff0000" }
-                        }
+                        Layout.preferredHeight: satValMatrix.height
 
                         Rectangle {
-                            y: (settingsPopupWindow.currentHue * parent.height) - height / 2
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: parent.width + 4; height: 8; radius: 2
-                            color: "#FFFFFF"
-                            border.color: "#000000"
-                            border.width: 1
-                        }
+                            id: hueBarTrack
+                            anchors.fill: parent // Forces local coordinate space matching the layout cell
+                            radius: 6
+                            border.color: fc.borderMuted
 
-                        MouseArea {
-                            anchors.fill: parent
-                            preventStealing: true
-                            
-                            function updateHue(mouse) {
-                                let normY = Math.max(0.0, Math.min(1.0, mouse.y / height))
-                                settingsPopupWindow.currentHue = normY
-                                
-                                if (settingsPopupWindow.currentSat === 0.0) settingsPopupWindow.currentSat = 1.0;
-                                if (settingsPopupWindow.currentVal === 0.0) settingsPopupWindow.currentVal = 1.0;
-
-                                settingsPopupWindow.updateColorFromHSV()
+                            gradient: Gradient {
+                                orientation: Gradient.Vertical
+                                GradientStop { position: 0.0; color: "#ff0000" }
+                                GradientStop { position: 0.17; color: "#ffff00" }
+                                GradientStop { position: 0.33; color: "#00ff00" }
+                                GradientStop { position: 0.5; color: "#00ffff" }
+                                GradientStop { position: 0.67; color: "#0000ff" }
+                                GradientStop { position: 0.83; color: "#ff00ff" }
+                                GradientStop { position: 1.0; color: "#ff0000" }
                             }
-                            onPressed: (mouse) => updateHue(mouse)
-                            onPositionChanged: (mouse) => updateHue(mouse)
+
+                            // The handle selector
+                            Rectangle {
+                                // Evaluates safely against the anchored local track height
+                                y: (settingsPopupWindow.currentHue * hueBarTrack.height) - (height / 2)
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: parent.width + 4
+                                height: 8
+                                radius: 2
+                                color: "#FFFFFF"
+                                border.color: "#000000"
+                                border.width: 1
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                preventStealing: true
+                                
+                                function updateHue(mouse) {
+                                    let normY = Math.max(0.0, Math.min(1.0, mouse.y / hueBarTrack.height))
+                                    settingsPopupWindow.currentHue = normY
+                                    
+                                    if (settingsPopupWindow.currentSat === 0.0) settingsPopupWindow.currentSat = 1.0;
+                                    if (settingsPopupWindow.currentVal === 0.0) settingsPopupWindow.currentVal = 1.0;
+
+                                    settingsPopupWindow.updateColorFromHSV()
+                                }
+                                onPressed: (mouse) => updateHue(mouse)
+                                onPositionChanged: (mouse) => updateHue(mouse)
+                            }
                         }
                     }
                 }
@@ -678,7 +704,11 @@ PanelWindow {
             let s = c.hsvSaturation;
             let v = c.hsvValue;
             
-            settingsPopupWindow.currentHue = isNaN(h) || h === undefined ? 0.0 : h;
+            // 🎨 Prevent resetting slider for white/grayscale profiles on window load
+            if (s > 0 && h !== undefined && !isNaN(h) && h >= 0) {
+                settingsPopupWindow.currentHue = h > 1.0 ? (h / 360.0) : h;
+            }
+            
             settingsPopupWindow.currentSat = isNaN(s) || s === undefined ? 0.0 : s;
             settingsPopupWindow.currentVal = isNaN(v) || v === undefined ? 1.0 : v;
             colorHexInput.text = ("" + c).toUpperCase();
