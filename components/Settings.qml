@@ -93,7 +93,7 @@ PanelWindow {
                 let s = localPickerColor.hsvSaturation;
                 let v = localPickerColor.hsvValue;
                 
-                // 🎨 Normalize hue; preserve current track position if grayscale (s === 0)
+                // 耳 Normalize hue; preserve current track position if grayscale (s === 0)
                 if (s > 0 && h !== undefined && !isNaN(h) && h >= 0) {
                     currentHue = h > 1.0 ? (h / 360.0) : h;
                 }
@@ -157,7 +157,7 @@ PanelWindow {
            
             color: shellConfig.colorBackground
             border.color: fc.borderMuted
-            border.width: 1
+            border.width: 0
             radius: shellConfig.radiusValue
 
             states: [
@@ -210,7 +210,7 @@ PanelWindow {
                 visible: !settingsPopupWindow.showFontPicker && !settingsPopupWindow.showColorPicker
 
                 Text {
-                    text: "Appearance Settings"
+                    text: "Settings"
                     color: shellConfig.themeText
                     font.family: shellConfig.shellFont
                     font.pixelSize: 18
@@ -236,12 +236,15 @@ PanelWindow {
                         from: 0.0
                         to: 1.0
 
-                        // 🎨 Update the running memory state smoothly while dragging
+                        // 沈 Force pointing hand icon shape over slider context tracks
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+
+                        // 耳 Update the running memory state smoothly while dragging
                         onValueChanged: {
                             shellConfig.colorBackground = Qt.rgba(0.12, 0.12, 0.14, value);
                         }
 
-                        // 💾 Only write to disk when you release the mouse handle
+                        // 沈 Only write to disk when you release the mouse handle
                         onPressedChanged: {
                             if (!pressed) { // False means the user just let go
                                 let alpha = value.toFixed(2);
@@ -301,8 +304,14 @@ PanelWindow {
                     }
 
                     Button {
+                        id: btnFontSelect
                         Layout.fillWidth: true
                         implicitHeight: 36
+                        hoverEnabled: true
+                        
+                        // 沈 Force pointing hand icon shape over custom button hitbox
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                         onClicked: {
                             fontSearchField.text = "";
                             settingsPopupWindow.filteredFontList = settingsPopupWindow.masterFontList;
@@ -316,9 +325,11 @@ PanelWindow {
                             font.pixelSize: 14
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignLeft
+                            leftPadding: 10
                         }
                         background: Rectangle {
-                            color: fc.trackBackground
+                            // 沈 Live tracking highlight matching backButton hover states
+                            color: btnFontSelect.hovered ? fc.overlayBackground : fc.trackBackground
                             radius: 6
                             border.color: fc.borderMuted
                         }
@@ -338,8 +349,14 @@ PanelWindow {
                     }
 
                     Button {
+                        id: btnColorSelect
                         Layout.fillWidth: true
                         implicitHeight: 36
+                        hoverEnabled: true
+
+                        // 沈 Force pointing hand icon shape over custom button hitbox
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                         onClicked: settingsPopupWindow.showColorPicker = true
 
                         contentItem: RowLayout {
@@ -361,7 +378,8 @@ PanelWindow {
                             }
                         }
                         background: Rectangle {
-                            color: fc.trackBackground
+                            // 沈 Live tracking highlight matching backButton hover states
+                            color: btnColorSelect.hovered ? fc.overlayBackground : fc.trackBackground
                             radius: 6
                             border.color: fc.borderMuted
                         }
@@ -396,6 +414,11 @@ PanelWindow {
                         flat: true
                         implicitWidth: 60
                         implicitHeight: 28
+                        hoverEnabled: true
+                        
+                        // 沈 Force pointing hand icon shape over custom button hitbox
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                         background: Rectangle { 
                             color: backButton.hovered ? fc.overlayBackground : fc.trackBackground
                             radius: 4
@@ -459,6 +482,7 @@ PanelWindow {
                             width: fontListView.width
                             height: 36
                             hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
 
                             Rectangle {
                                 anchors.fill: parent
@@ -522,6 +546,11 @@ PanelWindow {
                         flat: true
                         implicitWidth: 60
                         implicitHeight: 28
+                        hoverEnabled: true
+
+                        // 沈 Force pointing hand icon shape over custom button hitbox
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                         background: Rectangle { 
                             color: colorBackButton.hovered ? fc.overlayBackground : fc.trackBackground
                             radius: 4
@@ -604,6 +633,7 @@ PanelWindow {
                         MouseArea {
                             anchors.fill: parent
                             preventStealing: true
+                            cursorShape: Qt.PointingHandCursor
                             
                             function updateCoordinates(mouse) {
                                 let normX = Math.max(0.0, Math.min(1.0, mouse.x / width))
@@ -652,6 +682,7 @@ PanelWindow {
                             MouseArea {
                                 anchors.fill: parent
                                 preventStealing: true
+                                cursorShape: Qt.PointingHandCursor
                                 
                                 function updateHue(mouse) {
                                     let normY = Math.max(0.0, Math.min(1.0, mouse.y / hueBarTrack.height))
