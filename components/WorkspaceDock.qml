@@ -149,7 +149,7 @@ PanelWindow {
 
                 color: sideDockWindow.colorBackground
                 border.color: dockHitbox.isPinned ? fontCfg.borderMuted : "transparent"
-                border.width: 1
+                border.width: 0
 
                 Behavior on anchors.leftMargin {
                     NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
