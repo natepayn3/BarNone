@@ -139,7 +139,7 @@ PanelWindow {
             width: 360
             height: contentGrid.implicitHeight + (contentGrid.anchors.margins * 2)
             
-            x: dashHitbox.isPinned ? (parent.width - width - 16) : parent.width
+            x: dashHitbox.isPinned ? (parent.width - width - 6) : parent.width
             opacity: dashHitbox.isPinned ? 1.0 : 0.0
 
             Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -304,7 +304,7 @@ PanelWindow {
 
     Timer {
         id: dismissTimer
-        interval: 350
+        interval: 500
         running: false
         repeat: false
         onTriggered: dashHitbox.isPinned = false
