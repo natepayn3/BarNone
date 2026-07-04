@@ -356,9 +356,6 @@ print(json.dumps(apps))
                                 font.family: shellConfig.shellFont
                                 font.pixelSize: 18
                                 font.weight: Font.Bold
-                                Component.onCompleted: {
-                                    fc.applyOutline(this, fc.overlayBackground)
-                                }
                                 Layout.fillWidth: true
                             }
 
@@ -374,9 +371,6 @@ print(json.dumps(apps))
                                 font.weight: Font.ExtraLight
                                 verticalAlignment: Text.AlignVCenter
                                 Layout.preferredHeight: 18
-                                Component.onCompleted: {
-                                    fc.applyOutline(this, fc.overlayBackground)
-                                }
                             }
                         }
 
