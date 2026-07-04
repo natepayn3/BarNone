@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Wayland
 import QtQuick.Shapes
 import Quickshell.Io
 import Quickshell.Services.Notifications
@@ -10,19 +11,14 @@ import "../../configs"
 PanelWindow {
     id: dashboardWindow
 
+    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.namespace: "quickshell-resource-dashboard"
+    WlrLayershell.keyboardFocus: WlrLayershell.None
+    exclusionMode: ExclusionMode.Ignore
+
     FontConfig { id: fc }
 
     property var notificationModel: notifServer.trackedNotifications
-
-    Component.onCompleted: {
-        if (this.WlrLayershell != null) {
-            this.WlrLayershell.layer = WlrLayer.Top;
-            this.WlrLayershell.namespace = "quickshell-resource-dashboard";
-            this.WlrLayershell.keyboardFocus = WlrLayershell.None;
-        }
-    }
-
-    exclusionMode: ExclusionMode.Ignore
 
     anchors {
         right: true
@@ -151,7 +147,7 @@ PanelWindow {
 
             color: shellConfig.colorBackground
             border.color: shellConfig.colorBorder
-            border.width: 1
+            border.width: 0
             radius: shellConfig.radiusValue
 
             // --- Standalone Left App Icon ---
