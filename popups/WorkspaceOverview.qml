@@ -198,7 +198,6 @@ PanelWindow {
                             property bool isVerticalWorkspace: viewportFrame.calculatedBounds.isVertical
                             property real targetScale: isTargetActive ? 1.18 : (tileCardMouseArea.containsMouse ? 1.02 : 1.0)
 
-                            // Clean dimensions inherited directly from your stable horizontal layout bounds
                             width: Math.round(viewportFrame.width + 74)
                             height: 440
 
@@ -251,7 +250,6 @@ PanelWindow {
                                         Text {
                                             text: "clock_loader_10"
                                             font { family: fontCfg.iconFont; pixelSize: 30 }
-                                            // 🌟 Swapped hardcoded text colors for a dynamic 40% alpha version of your theme color selection
                                             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             width: 30
@@ -263,7 +261,6 @@ PanelWindow {
                                         Text {
                                             text: "clock_loader_10"
                                             font { family: fontCfg.iconFont; pixelSize: 30 }
-                                            // 🌟 Swapped hardcoded text colors for a dynamic 40% alpha version of your theme color selection
                                             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             width: 30
@@ -275,7 +272,6 @@ PanelWindow {
                                         Text {
                                             text: "density_small"
                                             font { family: fontCfg.iconFont; pixelSize: 30 }
-                                            // 🌟 Swapped hardcoded text colors for a dynamic 40% alpha version of your theme color selection
                                             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                                             anchors.horizontalCenter: parent.horizontalCenter
                                         }
@@ -307,7 +303,6 @@ PanelWindow {
                                                 font.family: overviewWindow.shellFont
                                                 font.pixelSize: tileWrapper.isTargetActive ? 16 : 13
                                                 font.bold: true
-                                                // 🌟 Swapped text states to scale opacities dynamically off shellConfig.themeText
                                                 color: tileWrapper.isTargetActive 
                                                        ? shellConfig.themeText 
                                                        : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
@@ -362,7 +357,6 @@ PanelWindow {
                                         
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         anchors.horizontalCenterOffset: (tvKnobsColumn.width + 20) / 2
-                                        
                                         anchors.top: headerDivider.bottom
                                         anchors.topMargin: 8
                                         anchors.bottom: parent.bottom
