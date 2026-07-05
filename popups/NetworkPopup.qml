@@ -130,7 +130,6 @@ PanelWindow {
                             networkPopupWindow.lastTextUpdateTime = now;
                         }
 
-                        // Feed our live calculations straight out to the timeline property
                         networkPopupWindow.currentInstantSpeed = rxSpeed + txSpeed;
                     }
                 }
@@ -309,7 +308,6 @@ PanelWindow {
                                         let availableWidth = sparklineCanvasWrapper.width;
                                         let availableHeight = sparklineCanvasWrapper.height;
 
-                                        // Auto-scale peak calculation window
                                         let activeHighestPeak = 1024 * 1024;
                                         for (let j = 0; j < totalPoints; j++) {
                                             let val = graphHistoryModel.get(j).speedValue;
@@ -385,7 +383,6 @@ PanelWindow {
                             implicitHeight: 30
                             hoverEnabled: true
                             
-                            // 🌟 Hand pointer shape attached to Import
                             HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                             background: Rectangle {
@@ -414,13 +411,11 @@ PanelWindow {
                             width: profileListView.width
                             height: 60
                             hoverEnabled: true
-                            // 🌟 Enforce hand cursor shape on list entries
                             cursorShape: Qt.PointingHandCursor
 
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                // 🌟 Updated list item highlights to use generic tokens
                                 color: networkPopupWindow.activeVpnName === profileName ? shellConfig.themeAccent : (parent.containsMouse ? fc.trackBackground : "transparent")
                                 border.color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.2) : (parent.containsMouse ? fc.borderMuted : "transparent")
                                 border.width: 1
@@ -450,7 +445,6 @@ PanelWindow {
                                     checked: networkPopupWindow.activeVpnName === profileName
                                     onClicked: networkPopupWindow.toggleProfileState(profileName, checked)
                                     
-                                    // 🌟 Hand pointer over configuration switch controls
                                     HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                                     implicitWidth: 42
@@ -483,7 +477,6 @@ PanelWindow {
                                     implicitWidth: 28; implicitHeight: 28
                                     hoverEnabled: true
                                     
-                                    // 🌟 Hand pointer over entry removal action buttons
                                     HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                                     background: Rectangle { color: delBtn.hovered ? fc.trackBackground : "transparent"; radius: 6; border.color: delBtn.hovered ? fc.borderMuted : "transparent"; border.width: 1 }
@@ -509,7 +502,6 @@ PanelWindow {
                             id: cancelBtn; flat: true; implicitWidth: 70; implicitHeight: 28
                             hoverEnabled: true
                             
-                            // 🌟 Hand pointer over directory cancel action buttons
                             HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                             background: Rectangle { color: cancelBtn.hovered ? fc.trackBackground : "transparent"; border.color: cancelBtn.hovered ? fc.borderMuted : "transparent"; border.width: 1; radius: 6 }
@@ -544,13 +536,11 @@ PanelWindow {
                                 delegate: MouseArea {
                                     id: fileDelegateItem; width: fileListView.width; height: fileName === "." ? 0 : 34; visible: fileName !== "."
                                     hoverEnabled: true
-                                    // 🌟 Hand pointer for individual file elements
                                     cursorShape: Qt.PointingHandCursor
 
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: 6
-                                        // 🌟 Match generic browser highlight parameters safely
                                         color: parent.containsMouse ? fc.trackBackground : "transparent"
                                         border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                         border.width: 1
