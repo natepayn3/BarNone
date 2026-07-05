@@ -13,7 +13,9 @@ Item {
     property bool btActive: false
     property bool dndActive: false
     property bool caffeineActive: false
-    property bool caffeineAvailable: false
+    
+    // Declarative binding evaluating the active status of both directory models
+    property bool caffeineAvailable: (usrBinCheck.count > 0 || usrLocalBinCheck.count > 0)
 
     signal wifiToggled()
     signal btToggled()
@@ -27,7 +29,6 @@ Item {
         id: usrBinCheck
         folder: "file:///usr/bin"
         nameFilters: ["hypridle"]
-        onCountChanged: caffeineAvailable = (usrBinCheck.count > 0 || usrLocalBinCheck.count > 0)
     }
 
     // Check /usr/local/bin/ for hypridle
@@ -35,7 +36,6 @@ Item {
         id: usrLocalBinCheck
         folder: "file:///usr/local/bin"
         nameFilters: ["hypridle"]
-        onCountChanged: caffeineAvailable = (usrBinCheck.count > 0 || usrLocalBinCheck.count > 0)
     }
 
     GridLayout {
@@ -64,7 +64,6 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                // Dynamic tint allocation based on runtime hex state
                 color: togglesWrapper.wifiActive 
                        ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.85) 
                        : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
