@@ -8,12 +8,9 @@ Item {
     width: parent.width
     height: 36
 
-    // Production logic state bindings
     property bool batteryAvailable: false
     property int batteryCapacity: 0
     property bool batteryCharging: false
-    
-    // Status text generation logic
     property string statusText: !batteryAvailable ? "" : (batteryCharging ? "Charging" : (batteryCapacity >= 99 ? "Charged" : "Discharging"))
     property string combinedText: batteryAvailable ? batteryCapacity + "% • " + statusText : "No Battery"
 
@@ -66,7 +63,6 @@ Item {
             }
             font.family: fc.iconFont
             font.pixelSize: 24
-            // 🌟 Bound background icon color to 40% opacity of your theme color selection
             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
             width: 24
             height: 24
@@ -76,7 +72,6 @@ Item {
             anchors.leftMargin: 12
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: 0
-            Component.onCompleted: fc.applySmoothing(this)
         }
 
         // --- LEFT-ALIGNED STATUS TEXT (BACKGROUND) ---
@@ -87,12 +82,10 @@ Item {
             anchors.leftMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             text: batterySliderRoot.combinedText
-            // 🌟 Bound background label color to 35% opacity of your theme color selection
             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
             font.family: fc.mainFont
             font.pixelSize: 13
             font.weight: Font.Bold
-            Component.onCompleted: fc.applySmoothing(this)
         }
 
         // --- PROGRESS FILL BAR ---
@@ -122,7 +115,6 @@ Item {
                 x: 12
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
-                Component.onCompleted: fc.applySmoothing(this)
             }
 
             // --- LEFT-ALIGNED STATUS TEXT (FOREGROUND OVERLAY) ---
@@ -136,7 +128,6 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                Component.onCompleted: fc.applySmoothing(this)
             }
         }
     }
