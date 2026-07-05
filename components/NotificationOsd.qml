@@ -97,7 +97,6 @@ PanelWindow {
                         width: 28
                         height: 28
                         radius: 6
-                        // 🌟 Swapped static white for an 8% alpha variant of your theme selection
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.08)
                         Layout.alignment: Qt.AlignVCenter
 
@@ -138,7 +137,6 @@ PanelWindow {
                         Text {
                             id: bodyText
                             text: model.body
-                            // 🌟 Swapped fc.textMuted for a dynamic 50% opacity theme text color blend
                             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                             font.family: fc.mainFont
                             font.pixelSize: 15
