@@ -5,25 +5,19 @@
 -- Full example file included here, but the important parts are:
 --
 -- hl.on("hyprland.start", function ()
---  hl.exec_cmd("qs -c Apertura")
+--  hl.exec_cmd("qs -c Aethr")
 --  hl.exec_cmd("awww-daemon") -- wallpaper module requires this
 -- end)
 -- 
--- local menu = "qs -c Apertura ipc call launcher toggle" -- if you want to use a custom keybind to open the app launcher
+-- local menu = "qs -c Aethr ipc call launcher toggle" -- if you want to use a custom keybind to open the app launcher
 -- 
--- -- Unique configuration for the bar layer
+---- Combined rule handles all quickshell layer panels (Bar, Settings HUD, etc.)
 -- hl.layer_rule({
---     name  = "quickshell-bar-blur",
---     match = { namespace = "quickshell-bar" },
---     blur  = true,
---     xray  = false,
--- })
--- hl.layer_rule({
---     name         = "quickshell-components-blur",
---     match        = { namespace = "^quickshell-(overlay|wallpapers|launcher)$" },
+--     name         = "quickshell-all",
+--     match        = { namespace = "^quickshell-.*" },
 --     blur         = true,
---     xray         = true,
---     ignore_alpha = 0.5,
+--     xray         = false,
+--     ignore_alpha = 0,
 -- })
 --
 -----------------------------------------
@@ -57,7 +51,7 @@ local fileManager = "nautilus --new-window"
 -- See https://wiki.hypr.land/Configuring/Basics/Autostart/
 
 hl.on("hyprland.start", function () 
-  hl.exec_cmd("qs -c Test")
+  hl.exec_cmd("qs -c Aethr")
   hl.exec_cmd("systemctl --user start hyprpolkitagent")
   hl.exec_cmd("hypridle")
   hl.exec_cmd("awww-daemon")
@@ -316,9 +310,9 @@ hl.window_rule({
     float = true,
 })
 
--- Make Signal transparent
+-- Make apps transparent
 hl.window_rule({
-    name    = "signal-transparency",
+    name    = "apps-transparency",
     match   = { class = "(^[Ss]ignal$|^[Cc]odium$)" },
     opacity = "0.85 0.75", -- Active opacity 0.85, Inactive opacity 0.75
 })
