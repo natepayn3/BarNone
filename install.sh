@@ -10,6 +10,8 @@ echo "Installing system dependencies..."
 sudo pacman -S --needed --noconfirm \
     hyprland \
     satty \
+    grim \
+    slurp \
     bluez \
     bluez-utils \
     networkmanager \
