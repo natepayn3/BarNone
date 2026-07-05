@@ -47,7 +47,6 @@ ColumnLayout {
                 Text {
                     anchors.centerIn: parent
                     text: modelData
-                    // 🌟 Extract RGB channels dynamically and set to 50% opacity
                     color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                     font.family: fc.mainFont
                     font.pixelSize: 10
@@ -79,7 +78,6 @@ ColumnLayout {
                 Text {
                     anchors.centerIn: parent
                     text: parent.isValidDay ? parent.dayNumber : ""
-                    // 🌟 Swapped the hardcoded white for a 75% alpha version of your theme color
                     color: parent.isToday ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.75)
                     font.family: fc.mainFont
                     font.pixelSize: parent.isToday ? 13 : 11
