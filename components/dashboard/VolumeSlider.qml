@@ -36,15 +36,11 @@ Item {
         border.width: 1
         border.color: fc.borderMuted
         radius: height / 2
-        
-        // Enforce master clipping bounds so the slider fill can never escape or deform
         clip: true
 
-        // LIGHT TEXT: Sits stationary underneath the fill bar
         Text {
             anchors.centerIn: parent
             text: volumeSliderRoot.percentageText
-            // 🌟 Swapped hardcoded white for a 35% alpha version of your theme color
             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
             font.family: fc.mainFont
             font.pixelSize: 13
@@ -60,16 +56,11 @@ Item {
             id: fillBar
             height: parent.height
             
-            // Map the width dynamically so 0% volume sits exactly at the height (48px circle)
             width: parent.height + ((parent.width - parent.height) * volumeSliderRoot.currentVolume)
             color: shellConfig.themeText
             radius: height / 2
-            
-            // Keep it hard-pinned to the left edge of the container at all times
             anchors.left: parent.left
             anchors.leftMargin: 0
-            
-            // Permanent visibility: Keep it solid even at 0% to prevent the circle from disappearing
             opacity: 1.0
             clip: true 
 
@@ -83,10 +74,6 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                
-                Component.onCompleted: {
-                    fc.applySmoothing(this)
-                }
             }
         }
 
@@ -128,8 +115,6 @@ Item {
                 font.pixelSize: 24
                 color: fc.overlayForeground
                 verticalAlignment: Text.AlignVCenter
-                
-                // 🎯 Pin horizontally via static X coordinate and use parent vertical centering
                 x: 12
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -143,7 +128,6 @@ Item {
 
         function updateVolume(mouseX) {
             let trackWidth = width - height;
-            // Clamp the mouse registration strictly to the center coordinates of our circular boundary
             let adjustedX = mouseX - (height / 2);
             let newPct = Math.max(0.0, Math.min(1.0, adjustedX / trackWidth));
             
