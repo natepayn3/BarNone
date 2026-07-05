@@ -140,8 +140,6 @@ PanelWindow {
                         font.pixelSize: 18
                         font.weight: Font.Bold
                         Layout.fillWidth: true
-                        
-                        Component.onCompleted: fc.applyOutline(this)
                     }
                 }
 
@@ -164,7 +162,6 @@ PanelWindow {
                             Layout.preferredHeight: 64
                             radius: 12
                             
-                            // 🌟 Aligned highlights with settings view using fc.overlayBackground on hover
                             color: powerPopupWindow.activeHoverIndex === index 
                                 ? fc.overlayBackground 
                                 : fc.trackBackground
