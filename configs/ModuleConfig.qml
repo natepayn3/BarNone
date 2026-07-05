@@ -14,7 +14,7 @@ QtObject {
     property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28)
     property color colorAccent: Qt.rgba(0.6, 0.45, 0.9, 1.0)
     
-    property string shellFont: "Google Sans Flex"
+    property string shellFont: "Open Sans"
     property int radiusValue: 16
     
     // --- GLOBAL LAYOUT GEOMETRY ---
