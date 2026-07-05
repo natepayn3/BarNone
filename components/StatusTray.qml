@@ -77,7 +77,6 @@ PanelWindow {
         }
 
         // --- BACKGROUND SERVICE CHECK ---
-        // Look for a match in our running window classes array
         let isWindowOpen = openWindowClasses.some(cls => {
             return cls.includes(cleanId) || cleanId.includes(cls);
         });
@@ -90,7 +89,6 @@ PanelWindow {
     }
 
     function updateOpenWindows() {
-        // Queries hyprctl for client classes in a raw flat format
         let proc = Quickshell.createProcess(["hyprctl", "clients", "-j"]);
         proc.onFinished = function(stdout, stderr, exitCode) {
             if (exitCode === 0) {
@@ -250,17 +248,14 @@ PanelWindow {
                         }
 
                         // --- LOCAL ICON-ANCHORED POPUP WINDOW ---
-                        // Attached directly to the item delegate with automatic translation
                         PopupWindow {
                             id: inlineTooltipPopup
                             visible: trayWindow.activeHoverIndex === index && !trayWindow.menuActive
                             
-                            // Locks tracking straight to the current icon delegate context
                             anchor.item: trayItemDelegate
                             anchor.edges: Edges.Bottom
                             anchor.gravity: Edges.Bottom
                             
-                            // Perfectly centers the 220px box directly under the 64px icon bounds
                             anchor.rect.x: 31
                             anchor.rect.y: 55
 
