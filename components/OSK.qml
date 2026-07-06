@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
@@ -20,7 +21,6 @@ PanelWindow {
     color: "transparent"
     mask: oskInputBounds
     
-    // Property dynamically bound from DisplaySettings.qml
     property string layoutMode: "Normal"
 
     Region {
@@ -84,19 +84,6 @@ PanelWindow {
         ]
     ]
 
-    // Uses empty string ("") as a spacer indicator to format the WASD cluster correctly
-    readonly property var layoutGamer: [
-        [
-            ["", "", 1], ["W", "KEY_W", 1], ["", "", 1]
-        ],
-        [
-            ["A", "KEY_A", 1], ["S", "KEY_S", 1], ["D", "KEY_D", 1]
-        ],
-        [
-            ["Shift", "KEY_LEFTSHIFT", 2], ["Space", "KEY_SPACE", 3], ["Enter", "KEY_ENTER", 2]
-        ]
-    ]
-
     Process {
         id: keySniffer
         command: ["stdbuf", "-oL", "sudo", "showmethekey-cli"]
@@ -125,17 +112,57 @@ PanelWindow {
         }
     }
 
+    Component {
+        id: keyCapComponent
+        Rectangle {
+            id: keyCap
+            property var keyData
+            property bool isPressed: root.pressedKeys.has(keyData[1])
+            property bool isSpacer: keyData[0] === ""
+
+            visible: !isSpacer
+            radius: root.layoutMode === "Gamer" ? 4 : shellConfig.radiusValue
+            color: isPressed ? shellConfig.themeText : shellConfig.colorBackground
+            border.color: isPressed ? shellConfig.themeText : shellConfig.colorBorder
+            border.width: 1
+
+            transform: Matrix4x4 {
+                matrix: {
+                    let m = Qt.matrix4x4();
+                    if (root.layoutMode === "Gamer") {
+                        m.m12 = -0.25; 
+                    }
+                    return m;
+                }
+            }
+
+            Behavior on color {
+                ColorAnimation { duration: shellConfig.durationOut }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                text: keyCap.keyData[0]
+                color: keyCap.isPressed ? shellConfig.themeBackground : fc.textPrimary
+                font.bold: true
+                font.pixelSize: 11
+                font.family: fc.mainFont
+                renderType: fc.preferredRenderType
+                antialiasing: fc.useAntialiasing
+            }
+        }
+    }
+
     Rectangle {
         id: keyboardWrapper
         color: "transparent"
         
         property real posX: (root.width - width) / 2
-        property real posY: root.height - height - shellConfig.panelBottomMargin 
+        property real posY: root.height - height - shellConfig.panelBottomMargin
         
-        // Dynamically adjust wrapper boundaries based on layout selection
         x: posX
         y: posY
-        width: root.layoutMode === "Gamer" ? 300 : (root.layoutMode === "Minimal" ? 540 : 720)
+        width: root.layoutMode === "Gamer" ? 360 : (root.layoutMode === "Minimal" ? 540 : 720)
         height: root.layoutMode === "Gamer" ? 180 : (root.layoutMode === "Minimal" ? 220 : 280)
         
         MouseArea {
@@ -159,15 +186,15 @@ PanelWindow {
             }
         }
 
+        // --- VIEW MODE 1: STANDARD KEYBOARDS (NORMAL / MINIMAL) ---
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 10
             spacing: 5
+            visible: root.layoutMode !== "Gamer"
 
             Repeater {
-                // Instantly re-evaluates the array matrix when the dropdown changes
-                model: root.layoutMode === "Gamer" ? root.layoutGamer : (root.layoutMode === "Minimal" ? root.layoutMinimal : root.layoutNormal)
-                
+                model: root.layoutMode === "Minimal" ? root.layoutMinimal : root.layoutNormal
                 delegate: RowLayout {
                     id: rowContainer
                     required property var modelData
@@ -176,40 +203,85 @@ PanelWindow {
 
                     Repeater {
                         model: rowContainer.modelData
-                        delegate: Rectangle {
-                            id: keyCap
+                        delegate: Loader {
                             required property var modelData
-                            
-                            implicitWidth: 38 * modelData[2]
-                            implicitHeight: 38
-                            radius: shellConfig.radiusValue 
-                            
-                            property bool isPressed: root.pressedKeys.has(modelData[1])
-                            property bool isSpacer: modelData[0] === ""
-
-                            // Hides the visual elements if this is flagged as a spacer geometry block
-                            color: isSpacer ? "transparent" : (isPressed ? shellConfig.themeText : shellConfig.colorBackground) 
-                            border.color: isSpacer ? "transparent" : (isPressed ? shellConfig.themeText : shellConfig.colorBorder) 
-                            border.width: isSpacer ? 0 : 1
-
-                            Behavior on color {
-                                ColorAnimation { duration: shellConfig.durationOut } 
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: keyCap.modelData[0]
-                                color: keyCap.isPressed ? shellConfig.themeBackground : fc.textPrimary 
-                                font.bold: true
-                                font.pixelSize: 11
-                                font.family: fc.mainFont 
-                                renderType: fc.preferredRenderType 
-                                antialiasing: fc.useAntialiasing 
-                                visible: !keyCap.isSpacer
-                            }
+                            sourceComponent: keyCapComponent
+                            onLoaded: item.keyData = modelData
+                            width: 38 * modelData[2]
+                            height: 38
                         }
                     }
                 }
+            }
+        }
+
+        // --- VIEW MODE 2: ABSOLUTE COORDINATE POSITIONING (GAMER) ---
+        Item {
+            anchors.fill: parent
+            visible: root.layoutMode === "Gamer"
+
+            // Tab (Row 1 Left)
+            Loader {
+                x: 15; y: 15
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["Tab", "KEY_TAB", 1]
+                width: 55; height: 38
+            }
+
+            // Shift (Row 2 Left)
+            Loader {
+                x: 15; y: 59
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["Shift", "KEY_LEFTSHIFT", 1]
+                width: 55; height: 38
+            }
+
+            // W (Row 1 Center Cluster)
+            Loader {
+                x: 128; y: 15
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["W", "KEY_W", 1]
+                width: 40; height: 38
+            }
+
+            // A (Row 2 Center Cluster)
+            Loader {
+                x: 82; y: 59
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["A", "KEY_A", 1]
+                width: 40; height: 38
+            }
+
+            // S (Row 2 Center Cluster)
+            Loader {
+                x: 128; y: 59
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["S", "KEY_S", 1]
+                width: 40; height: 38
+            }
+
+            // D (Row 2 Center Cluster)
+            Loader {
+                x: 174; y: 59
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["D", "KEY_D", 1]
+                width: 40; height: 38
+            }
+
+            // Enter (Row 1 Right Side)
+            Loader {
+                x: 234; y: 15
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["Enter", "KEY_ENTER", 1]
+                width: 65; height: 82
+            }
+
+            // Spacebar (Centered with an explicit shear offset correction)
+            Loader {
+                x: ((parent.width - width) / 2) + 5; y: 115
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["Space", "KEY_SPACE", 1]
+                width: 220; height: 38
             }
         }
     }
