@@ -25,7 +25,7 @@ sudo pacman -S --needed --noconfirm \
     base-devel \
     git \
     fish \
-    showmethekey
+    showmethekey-cli
 
 # 🧬 2. Force bootstrap yay if missing
 if ! command -v yay &>/dev/null; then
