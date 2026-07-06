@@ -96,13 +96,16 @@ PanelWindow {
                 
                 try {
                     let obj = JSON.parse(trimmed);
-                    if (obj.event_name === "KEYBOARD_KEY") {
+                    if (obj.event_name === "KEYBOARD_KEY" || obj.event_name === "POINTER_BUTTON") {
                         let updatedKeys = new Set(root.pressedKeys);
                         
+                        let targetIdentifier = obj.key_name || obj.button_name;
+                        if (!targetIdentifier) return;
+
                         if (obj.state_name === "PRESSED") {
-                            updatedKeys.add(obj.key_name);
+                            updatedKeys.add(targetIdentifier);
                         } else if (obj.state_name === "RELEASED") {
-                            updatedKeys.delete(obj.key_name);
+                            updatedKeys.delete(targetIdentifier);
                         }
                         
                         root.pressedKeys = updatedKeys;
@@ -114,37 +117,47 @@ PanelWindow {
 
     Component {
         id: keyCapComponent
-        Rectangle {
-            id: keyCap
+        Item {
+            id: keyCapRoot
             property var keyData
             property bool isPressed: root.pressedKeys.has(keyData[1])
             property bool isSpacer: keyData[0] === ""
 
+            anchors.fill: parent
             visible: !isSpacer
-            radius: root.layoutMode === "Gamer" ? 4 : shellConfig.radiusValue
-            color: isPressed ? shellConfig.themeText : shellConfig.colorBackground
-            border.color: isPressed ? shellConfig.themeText : shellConfig.colorBorder
-            border.width: 1
 
-            transform: Matrix4x4 {
-                matrix: {
-                    let m = Qt.matrix4x4();
-                    if (root.layoutMode === "Gamer") {
-                        m.m12 = -0.25; 
+            Rectangle {
+                id: keyBackground
+                anchors.fill: parent
+                radius: root.layoutMode === "Gamer" ? 4 : shellConfig.radiusValue
+                color: keyCapRoot.isPressed ? shellConfig.themeText : shellConfig.colorBackground
+                border.color: keyCapRoot.isPressed ? shellConfig.themeText : shellConfig.colorBorder
+                border.width: 1
+
+                transform: Matrix4x4 {
+                    matrix: {
+                        let m = Qt.matrix4x4();
+                        if (root.layoutMode === "Gamer") {
+                            m.m12 = -0.25; 
+                        }
+                        return m;
                     }
-                    return m;
+                }
+
+                Behavior on color {
+                    ColorAnimation { duration: shellConfig.durationOut }
                 }
             }
 
-            Behavior on color {
-                ColorAnimation { duration: shellConfig.durationOut }
-            }
-
             Text {
-                anchors.centerIn: parent
-                text: keyCap.keyData[0]
-                color: keyCap.isPressed ? shellConfig.themeBackground : fc.textPrimary
+                // Precise coordinate translation lines that completely balance layout skew changes
+                x: ((parent.width - width) / 2) - (root.layoutMode === "Gamer" ? ((parent.height * 0.125) - 2) : 0)
+                y: (parent.height - height) / 2
+                
+                text: keyCapRoot.keyData[0]
+                color: keyCapRoot.isPressed ? shellConfig.themeBackground : fc.textPrimary
                 font.bold: true
+                font.italic: root.layoutMode === "Gamer"
                 font.pixelSize: 11
                 font.family: fc.mainFont
                 renderType: fc.preferredRenderType
@@ -157,13 +170,12 @@ PanelWindow {
         id: keyboardWrapper
         color: "transparent"
         
-        // Initial spawning coordinate positioned out of the way in the bottom right bounds
         property real posX: root.width - width - 30
         property real posY: root.height - height - 30
         
         x: posX
         y: posY
-        width: root.layoutMode === "Gamer" ? 360 : (root.layoutMode === "Minimal" ? 540 : 720)
+        width: root.layoutMode === "Gamer" ? 440 : (root.layoutMode === "Minimal" ? 540 : 720)
         height: root.layoutMode === "Gamer" ? 180 : (root.layoutMode === "Minimal" ? 220 : 280)
         
         MouseArea {
@@ -221,7 +233,7 @@ PanelWindow {
             anchors.fill: parent
             visible: root.layoutMode === "Gamer"
 
-            // Tab (Row 1 Left)
+            // Tab
             Loader {
                 x: 15; y: 15
                 sourceComponent: keyCapComponent
@@ -229,7 +241,7 @@ PanelWindow {
                 width: 55; height: 38
             }
 
-            // Shift (Row 2 Left)
+            // Shift
             Loader {
                 x: 15; y: 59
                 sourceComponent: keyCapComponent
@@ -237,7 +249,7 @@ PanelWindow {
                 width: 55; height: 38
             }
 
-            // W (Row 1 Center Cluster)
+            // W
             Loader {
                 x: 128; y: 15
                 sourceComponent: keyCapComponent
@@ -245,7 +257,7 @@ PanelWindow {
                 width: 40; height: 38
             }
 
-            // A (Row 2 Center Cluster)
+            // A
             Loader {
                 x: 82; y: 59
                 sourceComponent: keyCapComponent
@@ -253,7 +265,7 @@ PanelWindow {
                 width: 40; height: 38
             }
 
-            // S (Row 2 Center Cluster)
+            // S
             Loader {
                 x: 128; y: 59
                 sourceComponent: keyCapComponent
@@ -261,7 +273,7 @@ PanelWindow {
                 width: 40; height: 38
             }
 
-            // D (Row 2 Center Cluster)
+            // D
             Loader {
                 x: 174; y: 59
                 sourceComponent: keyCapComponent
@@ -269,7 +281,7 @@ PanelWindow {
                 width: 40; height: 38
             }
 
-            // Enter (Row 1 Right Side)
+            // Enter
             Loader {
                 x: 234; y: 15
                 sourceComponent: keyCapComponent
@@ -277,12 +289,30 @@ PanelWindow {
                 width: 65; height: 82
             }
 
-            // Spacebar (Restored back to division by 4 scaling logic)
+            // Spacebar (Locked directly to the cluster center vertical axis alignment layout point)
             Loader {
-                x: (parent.width - width) / 4; y: 115
+                x: 38; y: 115
                 sourceComponent: keyCapComponent
                 onLoaded: item.keyData = ["Space", "KEY_SPACE", 1]
                 width: 220; height: 38
+            }
+
+            // --- DETACHED MOUSE ACTION COLUMN ---
+
+            // Left Click Block
+            Loader {
+                x: 320; y: 15
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["Left", "BTN_LEFT", 1]
+                width: 45; height: 138
+            }
+
+            // Right Click Block
+            Loader {
+                x: 380; y: 15
+                sourceComponent: keyCapComponent
+                onLoaded: item.keyData = ["Right", "BTN_RIGHT", 1]
+                width: 45; height: 138
             }
         }
     }
