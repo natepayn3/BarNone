@@ -33,9 +33,12 @@ Why "Aethr"? Aethr represents the invisible, transient layer of the interface. B
 
 <div align="center"><img height="300" alt="05" src="https://github.com/user-attachments/assets/7864ee13-16cb-499f-878e-838e695b73ee" />&nbsp;<img height="300" alt="04" src="https://github.com/user-attachments/assets/0aaa47da-e79b-47e4-b2ea-dc226142fe9e" /></div>
 
+<div align="center"><img width="966" height="511" alt="06" src="https://github.com/user-attachments/assets/7f1fb60c-f5d7-4182-a520-890dc69695a9" /></div>
+
 ## Installation & Deployment
 
 An automated deployment script is included:
+
 
     git clone https://github.com/natepayn3/Aethr.git
     cd Aethr
