@@ -26,6 +26,8 @@ PanelWindow {
     property bool showFontPicker: false
     property bool showColorPicker: false
     
+    property string selectedOskLayout: "Disabled"
+    
     property string selectedFont: shellConfig.shellFont ? shellConfig.shellFont : "Sans"
     property color localPickerColor: shellConfig.themeText
 
@@ -45,6 +47,12 @@ PanelWindow {
     }
 
     FontConfig { id: fc }
+
+    OSK {
+        id: virtualKeyboard
+        visible: settingsPopupWindow.selectedOskLayout !== "Disabled"
+        layoutMode: settingsPopupWindow.selectedOskLayout
+    }
 
     Timer {
         id: focusDelayTimer
@@ -93,7 +101,6 @@ PanelWindow {
                 let s = localPickerColor.hsvSaturation;
                 let v = localPickerColor.hsvValue;
                 
-                // 耳 Normalize hue; preserve current track position if grayscale (s === 0)
                 if (s > 0 && h !== undefined && !isNaN(h) && h >= 0) {
                     currentHue = h > 1.0 ? (h / 360.0) : h;
                 }
@@ -139,6 +146,7 @@ PanelWindow {
             id: bgCard
             width: shellConfig.panelWidth
             
+            // bgCard natively calculates its height based on mainLayout's shifting implicitHeight
             height: settingsPopupWindow.showFontPicker 
                 ? (fontPickerLayout.implicitHeight + 44)
                 : (settingsPopupWindow.showColorPicker ? (colorPickerLayout.implicitHeight + 44) : (mainLayout.implicitHeight + 44))
@@ -236,12 +244,17 @@ PanelWindow {
                 spacing: 14
                 visible: !settingsPopupWindow.showFontPicker && !settingsPopupWindow.showColorPicker
 
-                Text {
-                    text: "Display Settings"
-                    color: shellConfig.themeText
-                    font.family: shellConfig.shellFont
-                    font.pixelSize: 18
-                    font.weight: Font.Bold
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+                    
+                    Text {
+                        text: "Display Settings"
+                        color: shellConfig.themeText
+                        font.family: shellConfig.shellFont
+                        font.pixelSize: 18
+                        font.weight: Font.Bold
+                    }
                 }
 
                 ColumnLayout {
@@ -399,6 +412,96 @@ PanelWindow {
                             radius: 6
                             border.color: fc.borderMuted
                         }
+                    }
+                }
+
+                // --- OSK DROPDOWN MOVED TO BOTTOM ---
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Text {
+                        text: "On-Screen Keyboard Layout"
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
+                        font.family: shellConfig.shellFont
+                        font.pixelSize: 13
+                    }
+
+                    ComboBox {
+                        id: layoutDropdown
+                        Layout.fillWidth: true
+                        implicitHeight: 36
+                        model: ["Disabled", "Normal", "Gamer", "Minimal"]
+                        
+                        onCurrentTextChanged: settingsPopupWindow.selectedOskLayout = currentText
+                        
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+
+                        background: Rectangle {
+                            color: layoutDropdown.hovered ? fc.overlayBackground : fc.trackBackground
+                            radius: 6
+                            border.color: fc.borderMuted
+                        }
+                        
+                        contentItem: Text {
+                            text: layoutDropdown.displayText
+                            color: shellConfig.themeText
+                            font.family: shellConfig.shellFont
+                            font.pixelSize: 14
+                            verticalAlignment: Text.AlignVCenter
+                            leftPadding: 10
+                        }
+                        
+                        delegate: ItemDelegate {
+                            width: layoutDropdown.width
+                            height: 36
+                            
+                            HoverHandler { cursorShape: Qt.PointingHandCursor }
+
+                            contentItem: Text {
+                                text: modelData
+                                color: shellConfig.themeText
+                                font.family: shellConfig.shellFont
+                                font.pixelSize: 14
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: 10
+                            }
+                            background: Rectangle {
+                                color: layoutDropdown.highlightedIndex === index ? fc.overlayBackground : "transparent"
+                                radius: 4
+                            }
+                        }
+                        
+                        popup: Popup {
+                            y: layoutDropdown.height + 4
+                            width: layoutDropdown.width
+                            implicitHeight: contentItem.implicitHeight
+                            padding: 4
+                            
+                            contentItem: ListView {
+                                clip: true
+                                implicitHeight: contentHeight
+                                model: layoutDropdown.popup.visible ? layoutDropdown.delegateModel : null
+                                currentIndex: layoutDropdown.highlightedIndex
+                            }
+                            background: Rectangle {
+                                // Locked to a solid, non-transparent background to hide underlying UI elements
+                                color: Qt.rgba(0.12, 0.12, 0.14, 1.0)
+                                border.color: fc.borderMuted
+                                border.width: 1
+                                radius: 6
+                            }
+                        }
+                    }
+                }
+
+                // Reactive spacer block that expands mainLayout's implicitHeight when the popup opens
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: layoutDropdown.popup.visible ? (layoutDropdown.popup.contentItem.implicitHeight + 8) : 0
+                    
+                    Behavior on Layout.preferredHeight {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                     }
                 }
             }
