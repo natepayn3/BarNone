@@ -33,7 +33,7 @@ Why "Aethr"? Aethr represents the invisible, transient layer of the interface. B
 
 <div align="center"><img height="300" alt="05" src="https://github.com/user-attachments/assets/7864ee13-16cb-499f-878e-838e695b73ee" />&nbsp;<img height="300" alt="04" src="https://github.com/user-attachments/assets/0aaa47da-e79b-47e4-b2ea-dc226142fe9e" /></div>
 
-<div align="center"><img width="1311" height="648" alt="06" src="https://github.com/user-attachments/assets/faf3746c-4f33-452a-ae1e-2a49ad1ac1dc" /></div>
+<div align="center"><img height="300" alt="06" src="https://github.com/user-attachments/assets/faf3746c-4f33-452a-ae1e-2a49ad1ac1dc" />&nbsp;<img height="300" alt="07" src="https://github.com/user-attachments/assets/9bd389ac-b8da-40d8-982f-ff20f17e9f39" /></div>
 
 ## Installation & Deployment
 
