@@ -66,3 +66,11 @@ Once deployed, you can interact with or toggle the shell layout elements cleanly
 
 - Toggle App Launcher: qs -c Aethr ipc call launcher toggle
 - Toggle Workspace Overview: qs -c Aethr ipc call overview toggle
+
+<a href="https://www.star-history.com/?repos=natepayn3%2FAethr&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=natepayn3/Aethr&type=date&theme=dark&legend=top-left&sealed_token=JWn2IfkuqV3w7QIT2m9EdV3HZipCen1jArzxZw50WWEkmbgwO8aJwqorAYa_xHW9QJR5JxtL6WVDnO0WqTqXqg10QLZZAWWRlTXe4O5gXKyFwTBnMFJhZN0-AhDeoBb3F2CdrEivBd5pX0arjVyM1CETXcxdHv2WbESWxTU-YNWox4TtJ37bjQQWyITZ" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=natepayn3/Aethr&type=date&legend=top-left&sealed_token=JWn2IfkuqV3w7QIT2m9EdV3HZipCen1jArzxZw50WWEkmbgwO8aJwqorAYa_xHW9QJR5JxtL6WVDnO0WqTqXqg10QLZZAWWRlTXe4O5gXKyFwTBnMFJhZN0-AhDeoBb3F2CdrEivBd5pX0arjVyM1CETXcxdHv2WbESWxTU-YNWox4TtJ37bjQQWyITZ" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=natepayn3/Aethr&type=date&legend=top-left&sealed_token=JWn2IfkuqV3w7QIT2m9EdV3HZipCen1jArzxZw50WWEkmbgwO8aJwqorAYa_xHW9QJR5JxtL6WVDnO0WqTqXqg10QLZZAWWRlTXe4O5gXKyFwTBnMFJhZN0-AhDeoBb3F2CdrEivBd5pX0arjVyM1CETXcxdHv2WbESWxTU-YNWox4TtJ37bjQQWyITZ" />
+ </picture>
+</a>
