@@ -420,7 +420,7 @@ PanelWindow {
                                 }
 
                                 Text {
-                                    text: "speaker_2"
+                                    text: "mic"
                                     font.family: fc.iconFont
                                     font.pixelSize: 18
                                     color: shellConfig.themeText
