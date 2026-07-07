@@ -66,13 +66,3 @@ Once deployed, you can interact with or toggle the shell layout elements cleanly
 
 - Toggle App Launcher: qs -c Aethr ipc call launcher toggle
 - Toggle Workspace Overview: qs -c Aethr ipc call overview toggle
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=natepayn3%2FAethr&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=natepayn3/Aethr&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=natepayn3/Aethr&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=natepayn3/Aethr&type=date&legend=top-left" />
- </picture>
-</a>
