@@ -24,7 +24,7 @@ PanelWindow {
         right: true
     }
 
-    implicitWidth: 450
+    implicitWidth: bgCard.width + 80
     implicitHeight: bgCard.height 
     color: "transparent"
 
@@ -109,12 +109,21 @@ PanelWindow {
         Region { item: dashHitbox.isPinned ? leftDashboardIcon : null }
     }
 
+    Process {
+        id: inlineProcessKiller
+        onRunningChanged: {
+            if (!running && resourceRingsComp !== null) {
+                statePoller.triggered();
+            }
+        }
+    }
+
     MouseArea {
         id: dashHitbox
         anchors.fill: parent
         hoverEnabled: true
 
-        property bool stableHover: hotspotTrigger.containsMouse || cardHover.hovered
+        property bool stableHover: hotspotTrigger.containsMouse || cardHover.hovered || processPanelHover.hovered
         property bool isPinned: false
 
         onStableHoverChanged: {
@@ -136,13 +145,14 @@ PanelWindow {
 
         Rectangle {
             id: bgCard
-            width: 360
-            height: contentGrid.implicitHeight + (contentGrid.anchors.margins * 2)
+            width: resourceRingsComp.listActive ? 614 : 360
+            height: mainSplitter.implicitHeight + (mainSplitter.anchors.margins * 2)
             
             x: dashHitbox.isPinned ? (parent.width - width - 6) : parent.width
             opacity: dashHitbox.isPinned ? 1.0 : 0.0
 
             Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
             color: shellConfig.colorBackground
@@ -150,7 +160,6 @@ PanelWindow {
             border.width: 0
             radius: shellConfig.radiusValue
 
-            // --- Standalone Left App Icon ---
             Text {
                 id: leftDashboardIcon
                 text: "more"
@@ -166,43 +175,30 @@ PanelWindow {
 
             HoverHandler { id: cardHover }
 
-            ColumnLayout {
-                id: contentGrid
+            RowLayout {
+                id: mainSplitter
                 anchors.fill: parent
                 anchors.margins: 24
-                spacing: 20
+                spacing: 0
 
-                RowLayout {
-                    id: contentGridRow
-                    Layout.fillWidth: true
-                    spacing: 16
+                ColumnLayout {
+                    id: originalDashboardContent
+                    Layout.preferredWidth: 312
+                    Layout.fillHeight: true
+                    spacing: 20
 
-                    ColumnLayout {
-                        id: leftColumn
+                    RowLayout {
+                        id: topMetricsRow
                         Layout.fillWidth: true
-                        spacing: 20
+                        spacing: 16
 
-                        Clock { 
+                        ColumnLayout {
+                            id: leftColumn
                             Layout.fillWidth: true
-                            Component.onCompleted: {
-                                for (let i = 0; i < children.length; i++) {
-                                    if (children[i].horizontalAlignment !== undefined) {
-                                        children[i].horizontalAlignment = Text.AlignHCenter;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        RowLayout {
-                            id: weatherCalendarRow
-                            Layout.fillWidth: true
-                            spacing: 12
+                            spacing: 20
 
-                            Weather { 
+                            Clock { 
                                 Layout.fillWidth: true
-                                Layout.preferredWidth: 40
-                                Layout.alignment: Qt.AlignTop
-                                
                                 Component.onCompleted: {
                                     for (let i = 0; i < children.length; i++) {
                                         if (children[i].horizontalAlignment !== undefined) {
@@ -211,91 +207,309 @@ PanelWindow {
                                     }
                                 }
                             }
-
-                            DashCalendar {
+                            
+                            RowLayout {
+                                id: weatherCalendarRow
                                 Layout.fillWidth: true
-                                Layout.preferredWidth: 60
-                                Layout.alignment: Qt.AlignTop
+                                spacing: 12
+
+                                Weather { 
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 40
+                                    Layout.alignment: Qt.AlignTop
+                                    
+                                    Component.onCompleted: {
+                                        for (let i = 0; i < children.length; i++) {
+                                            if (children[i].horizontalAlignment !== undefined) {
+                                                children[i].horizontalAlignment = Text.AlignHCenter;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                DashCalendar {
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 60
+                                    Layout.alignment: Qt.AlignTop
+                                }
+                            }
+                            
+                            VolumeSlider { 
+                                Layout.fillWidth: true
+                                Layout.topMargin: -12
+                            }
+
+                            BrightnessSlider { 
+                                Layout.fillWidth: true
+                                Layout.topMargin: 0
+                            }
+
+                            BatterySlider {
+                                Layout.fillWidth: true
+                                Layout.topMargin: 0
                             }
                         }
-                        
-                        VolumeSlider { 
-                            Layout.fillWidth: true
-                            Layout.topMargin: -12
-                        }
 
-                        BrightnessSlider { 
-                            Layout.fillWidth: true
-                            Layout.topMargin: 0
-                        }
+                        ColumnLayout {
+                            id: rightColumn
+                            Layout.preferredWidth: 84
+                            Layout.fillHeight: true
+                            spacing: 0
 
-                        BatterySlider {
-                            Layout.fillWidth: true
-                            Layout.topMargin: 0
+                            ResourceRings {
+                                id: resourceRingsComp
+                                Layout.fillHeight: true
+                                Layout.fillWidth: true
+                            }
                         }
                     }
+
+                    Toggles {
+                        Layout.fillWidth: true
+                        
+                        wifiAvailable: dashboardWindow.wifiAvailable
+                        wifiActive: dashboardWindow.wifiActive
+                        btActive: dashboardWindow.btActive
+                        caffeineActive: dashboardWindow.caffeineActive
+
+                        dndActive: dashboardWindow.dndActive
+
+                        onDndToggled: dashboardWindow.dndToggled()
+
+                        onWifiToggled: {
+                            dashboardWindow.wifiActive = !dashboardWindow.wifiActive
+                            wifiToggleProc.command = ["sh", "-c", "nmcli radio wifi | grep -q enabled && nmcli radio wifi off || nmcli radio wifi on"]
+                            wifiToggleProc.running = true
+                        }
+                        onBtToggled: {
+                            dashboardWindow.btActive = !dashboardWindow.btActive
+                            btToggleProc.command = ["sh", "-c", "bluetoothctl show | grep -q 'Powered: yes' && bluetoothctl power off || bluetoothctl power on"]
+                            btToggleProc.running = true
+                        }
+                        onCaffeineToggled: {
+                            dashboardWindow.caffeineActive = !dashboardWindow.caffeineActive
+                            caffeineToggleProc.command = dashboardWindow.caffeineActive 
+                                ? ["pkill", "-x", "hypridle"]
+                                : ["hyprctl", "dispatch", "hl.dsp.exec_cmd('hypridle')"];
+                            caffeineToggleProc.running = true
+                        }
+                    }
+
+                    Item {
+                        id: mediaWrapper
+                        Layout.fillWidth: true
+                        implicitHeight: childrenRect.height
+
+                        Media { 
+                            width: parent.width
+                        }
+                    }
+
+                    Item {
+                        id: notifWrapper
+                        Layout.fillWidth: true
+                        implicitHeight: childrenRect.height
+
+                        Notifications { 
+                            width: parent.width
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: sideProcessPanel
+                    Layout.preferredWidth: resourceRingsComp.listActive ? 234 : 0
+                    Layout.leftMargin: resourceRingsComp.listActive ? 20 : 0
+                    Layout.fillHeight: true
+                    clip: true
+                    color: "transparent"
+
+                    Behavior on Layout.preferredWidth { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on Layout.leftMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+                    HoverHandler { id: processPanelHover }
 
                     ColumnLayout {
-                        id: rightColumn
-                        Layout.preferredWidth: 84
-                        Layout.fillHeight: true
-                        spacing: 0
+                        width: 234
+                        height: parent.height
+                        spacing: 10
 
-                        ResourceRings {
-                            Layout.fillHeight: true
+                        RowLayout {
                             Layout.fillWidth: true
+                            Text {
+                                text: "Top Resource Consumers"
+                                color: shellConfig.themeText
+                                font.family: fc.mainFont
+                                font.pixelSize: 12
+                                font.weight: Font.Bold
+                                Layout.fillWidth: true
+                            }
+                            
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                width: 24
+                                height: 24
+                                radius: 6
+                                color: closeListHitbox.containsMouse ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.15) : "transparent"
+
+                                Behavior on color { ColorAnimation { duration: 150 } }
+
+                                Text {
+                                    text: "×"
+                                    color: closeListHitbox.containsMouse ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
+                                    font.family: fc.mainFont
+                                    font.pixelSize: 24
+                                    font.weight: Font.Bold
+                                    anchors.centerIn: parent
+                                }
+                                MouseArea {
+                                    id: closeListHitbox
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: resourceRingsComp.listActive = false
+                                }
+                            }
                         }
-                    }
-                }
 
-                Toggles {
-                    Layout.fillWidth: true
-                    
-                    wifiAvailable: dashboardWindow.wifiAvailable
-                    wifiActive: dashboardWindow.wifiActive
-                    btActive: dashboardWindow.btActive
-                    caffeineActive: dashboardWindow.caffeineActive
+                        ListView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+                            model: resourceRingsComp.activeModel
+                            spacing: 6
+                            boundsBehavior: Flickable.StopAtBounds
+                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-                    dndActive: dashboardWindow.dndActive
+                            section.property: "category"
+                            section.delegate: Column {
+                                width: 224
+                                topPadding: section === "CPU" ? 2 : 14
+                                bottomPadding: 6
+                                spacing: 6
+                                
+                                Text {
+                                    text: section
+                                    color: shellConfig.themeText
+                                    font.family: fc.mainFont
+                                    font.pixelSize: 11
+                                    font.weight: Font.ExtraBold
+                                    font.capitalization: Font.AllUppercase
+                                    opacity: 0.5
+                                }
+                                Rectangle {
+                                    width: parent.width
+                                    height: 1
+                                    color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.1)
+                                }
+                            }
 
-                    onDndToggled: dashboardWindow.dndToggled()
+                            delegate: Rectangle {
+                                width: 224
+                                height: 28
+                                color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.04)
+                                radius: Math.max(2, shellConfig.radiusValue - 4)
 
-                    onWifiToggled: {
-                        dashboardWindow.wifiActive = !dashboardWindow.wifiActive
-                        wifiToggleProc.command = ["sh", "-c", "nmcli radio wifi | grep -q enabled && nmcli radio wifi off || nmcli radio wifi on"]
-                        wifiToggleProc.running = true
-                    }
-                    onBtToggled: {
-                        dashboardWindow.btActive = !dashboardWindow.btActive
-                        btToggleProc.command = ["sh", "-c", "bluetoothctl show | grep -q 'Powered: yes' && bluetoothctl power off || bluetoothctl power on"]
-                        btToggleProc.running = true
-                    }
-                    onCaffeineToggled: {
-                        dashboardWindow.caffeineActive = !dashboardWindow.caffeineActive
-                        caffeineToggleProc.command = dashboardWindow.caffeineActive 
-                            ? ["pkill", "-x", "hypridle"]
-                            : ["hyprctl", "dispatch", "hl.dsp.exec_cmd('hypridle')"];
-                        caffeineToggleProc.running = true
-                    }
-                }
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 8
+                                    anchors.rightMargin: 8
+                                    spacing: 4
 
-                Item {
-                    id: mediaWrapper
-                    Layout.fillWidth: true
-                    implicitHeight: childrenRect.height
+                                    Text {
+                                        text: model.metric || ""
+                                        color: shellConfig.themeText
+                                        font.family: fc.mainFont
+                                        font.pixelSize: 11
+                                        font.weight: Font.Bold
+                                        Layout.preferredWidth: 38
+                                    }
 
-                    Media { 
-                        width: parent.width
-                    }
-                }
+                                    Text {
+                                        text: model.name || ""
+                                        color: shellConfig.themeText
+                                        font.family: fc.mainFont
+                                        font.pixelSize: 11
+                                        font.weight: Font.Normal
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
 
-                Item {
-                    id: notifWrapper
-                    Layout.fillWidth: true
-                    implicitHeight: childrenRect.height
+                                    Rectangle {
+                                        width: 18
+                                        height: 18
+                                        radius: 9
+                                        color: killMouse.containsMouse ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.15) : "transparent"
+                                        Layout.alignment: Qt.AlignVCenter
 
-                    Notifications { 
-                        width: parent.width
+                                        Text {
+                                            text: "×"
+                                            color: killMouse.containsMouse ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
+                                            anchors.centerIn: parent
+                                            font.pixelSize: 14
+                                            font.weight: Font.Bold
+                                        }
+
+                                        MouseArea {
+                                            id: killMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                inlineProcessKiller.command = ["kill", "-9", model.pid];
+                                                inlineProcessKiller.running = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Inline Comment: Disk space progress bar appended to the bottom of the layout
+                        Column {
+                            Layout.fillWidth: true
+                            Layout.topMargin: 8
+                            Layout.bottomMargin: 8
+                            spacing: 6
+
+                            RowLayout {
+                                width: parent.width
+                                Text {
+                                    text: "DISK SPACE"
+                                    color: shellConfig.themeText
+                                    font.family: fc.mainFont
+                                    font.pixelSize: 11
+                                    font.weight: Font.ExtraBold
+                                    font.capitalization: Font.AllUppercase
+                                    opacity: 0.5
+                                    Layout.fillWidth: true
+                                }
+                                Text {
+                                    text: Math.round(resourceRingsComp.sysDisk * 100) + "%"
+                                    color: shellConfig.themeText
+                                    font.family: fc.mainFont
+                                    font.pixelSize: 11
+                                    font.weight: Font.Bold
+                                    opacity: 0.5
+                                }
+                            }
+
+                            Rectangle {
+                                width: parent.width
+                                height: 6
+                                radius: 3
+                                color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.1)
+
+                                Rectangle {
+                                    width: parent.width * resourceRingsComp.sysDisk
+                                    height: parent.height
+                                    radius: 3
+                                    color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
+                                    
+                                    Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -307,6 +521,9 @@ PanelWindow {
         interval: 500
         running: false
         repeat: false
-        onTriggered: dashHitbox.isPinned = false
+        onTriggered: {
+            dashHitbox.isPinned = false;
+            resourceRingsComp.listActive = false; 
+        }
     }
 }

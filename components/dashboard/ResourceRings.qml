@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Shapes
 import QtQuick.Layouts
+import QtQuick.Controls
+import Quickshell
 import Quickshell.Io
 import "../../configs"
 
@@ -16,7 +18,15 @@ Item {
     property var lastCpuTotal: 0
     property var lastCpuIdle: 0
 
+    property alias activeModel: globalProcessModel
+    property string activeLabel: ""
+    property bool listActive: false
+
     FontConfig { id: fc }
+
+    ListModel {
+        id: globalProcessModel
+    }
 
     Timer {
         interval: 3000
@@ -26,6 +36,46 @@ Item {
             cpuStatReader.reload();
             memInfoReader.reload();
             if (!diskGpuProc.running) diskGpuProc.running = true; 
+        }
+    }
+
+    // Inline Comment: Master hitbox safely outside the layout, handling both buttons
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: allProcessesFetcher.running = true
+    }
+
+    Process {
+        id: allProcessesFetcher
+        command: ["/bin/fish", "-c", "echo '___CAT___|CPU'; ps -eo pid,pcpu,comm --sort=-pcpu | head -n 9 | tail -n +2 | awk -v cores=(nproc) '{print $1\"|\"$2/cores\"|\"$3}'; echo '___CAT___|GPU'; nvidia-smi --query-compute-apps=pid,used_memory,name --format=csv,noheader,nounits 2>/dev/null | head -n 8 | awk -F', ' '{print $1\"|\"$2\" MB|\"$3}'; echo '___CAT___|RAM'; ps -eo pid,pmem,comm --sort=-pmem | head -n 9 | tail -n +2 | awk '{print $1\"|\"$2\"|\"$3}'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                ringsRoot.activeModel.clear();
+                let currentCat = "CPU";
+                let lines = this.text.trim().split("\n");
+                
+                for (let i = 0; i < lines.length; i++) {
+                    if (!lines[i]) continue;
+                    let parts = lines[i].split("|");
+                    
+                    if (parts[0] === "___CAT___") {
+                        currentCat = parts[1];
+                    } else if (parts.length === 3) {
+                        let percentage = currentCat === "GPU" ? parts[1] : Math.round(parseFloat(parts[1])) + "%";
+                        if (currentCat !== "GPU" && Math.round(parseFloat(parts[1])) > 100) percentage = "100%";
+                        
+                        ringsRoot.activeModel.append({
+                            "category": currentCat,
+                            "metric": percentage,
+                            "name": parts[2],
+                            "pid": parts[0]
+                        });
+                    }
+                }
+                ringsRoot.activeLabel = "System";
+                ringsRoot.listActive = true;
+            }
         }
     }
 
@@ -41,7 +91,6 @@ Item {
             anchors.fill: parent
             layer.enabled: true; layer.samples: 4
 
-            // VECTOR OUTLINE LAYER: Active Progress Segment Drop-Shadow Only
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: fc.overlayBackground
@@ -53,7 +102,6 @@ Item {
                 }
             }
             
-            // Standard Translucent Track Background (No outline underneath)
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: fc.trackBackground
@@ -64,7 +112,6 @@ Item {
                 }
             }
 
-            // Standard Active Progress Indicator 
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: shellConfig.themeText
@@ -83,7 +130,6 @@ Item {
 
             Text {
                 text: ringRow.label
-                // Extracts RGB channel values dynamically and forces 50% opacity
                 color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                 font.family: fc.mainFont
                 font.pixelSize: 10 
@@ -107,7 +153,6 @@ Item {
         }
     }
 
-    // --- DYNAMIC SEPARATION COLUMN TRACKER ---
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -132,6 +177,8 @@ Item {
             value: ringsRoot.sysDisk
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
         }
+
+        // Inline Comment: Removed the problematic duplicate MouseArea from inside the layout
     }
 
     FileView {
