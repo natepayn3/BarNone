@@ -151,14 +151,14 @@ PanelWindow {
 
             Text {
                 // Precise coordinate translation lines that completely balance layout skew changes
-                x: ((parent.width - width) / 2) - (root.layoutMode === "Gamer" ? ((parent.height * 0.125) - 2) : 0)
+                x: ((parent.width - width) / 2) - (root.layoutMode === "Gamer" ? ((parent.height * 0.125) - 1): 0)
                 y: (parent.height - height) / 2
                 
                 text: keyCapRoot.keyData[0]
                 color: keyCapRoot.isPressed ? shellConfig.themeBackground : fc.textPrimary
                 font.bold: true
                 font.italic: root.layoutMode === "Gamer"
-                font.pixelSize: 11
+                font.pixelSize: 12
                 font.family: fc.mainFont
                 renderType: fc.preferredRenderType
                 antialiasing: fc.useAntialiasing
@@ -235,7 +235,7 @@ PanelWindow {
 
             // Tab
             Loader {
-                x: 15; y: 15
+                x: 25; y: 15
                 sourceComponent: keyCapComponent
                 onLoaded: item.keyData = ["Tab", "KEY_TAB", 1]
                 width: 55; height: 38
@@ -251,7 +251,7 @@ PanelWindow {
 
             // W
             Loader {
-                x: 128; y: 15
+                x: 138; y: 15
                 sourceComponent: keyCapComponent
                 onLoaded: item.keyData = ["W", "KEY_W", 1]
                 width: 40; height: 38
@@ -291,28 +291,98 @@ PanelWindow {
 
             // Spacebar (Locked directly to the cluster center vertical axis alignment layout point)
             Loader {
-                x: 38; y: 115
+                x: 30; y: 115
                 sourceComponent: keyCapComponent
                 onLoaded: item.keyData = ["Space", "KEY_SPACE", 1]
                 width: 220; height: 38
             }
 
-            // --- DETACHED MOUSE ACTION COLUMN ---
-
-            // Left Click Block
-            Loader {
+            // --- UNIFIED INTEGRATED MOUSE CHASSIS ---
+            Item {
+                id: mouseChassis
                 x: 320; y: 15
-                sourceComponent: keyCapComponent
-                onLoaded: item.keyData = ["Left", "BTN_LEFT", 1]
-                width: 45; height: 138
-            }
+                width: 105; height: 138
 
-            // Right Click Block
-            Loader {
-                x: 380; y: 15
-                sourceComponent: keyCapComponent
-                onLoaded: item.keyData = ["Right", "BTN_RIGHT", 1]
-                width: 45; height: 138
+                // Track button states from the root process handler
+                readonly property bool leftPressed: root.pressedKeys.has("BTN_LEFT")
+                readonly property bool rightPressed: root.pressedKeys.has("BTN_RIGHT")
+                readonly property bool middlePressed: root.pressedKeys.has("BTN_MIDDLE")
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 20
+                    color: shellConfig.colorBackground
+                    border.color: shellConfig.colorBorder
+                    border.width: 1
+
+                    // Left Click Target Zone
+                    Rectangle {
+                        id: leftClickPart
+                        width: (parent.width / 2)
+                        height: parent.height * 0.45
+                        x: 0; y: 0
+                        topLeftRadius: parent.radius
+                        color: mouseChassis.leftPressed ? shellConfig.themeText : "transparent"
+                        border.color: mouseChassis.leftPressed ? shellConfig.themeText : shellConfig.colorBorder
+                        border.width: 1
+
+                        Behavior on color { ColorAnimation { duration: shellConfig.durationOut } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: ""
+                            color: mouseChassis.leftPressed ? shellConfig.themeBackground : fc.textPrimary
+                            font.bold: true
+                            font.pixelSize: 11
+                            font.family: fc.mainFont
+                        }
+                    }
+
+                    // Right Click Target Zone
+                    Rectangle {
+                        id: rightClickPart
+                        width: (parent.width / 2)
+                        height: parent.height * 0.45
+                        x: parent.width / 2; y: 0
+                        topRightRadius: parent.radius
+                        color: mouseChassis.rightPressed ? shellConfig.themeText : "transparent"
+                        border.color: mouseChassis.rightPressed ? shellConfig.themeText : shellConfig.colorBorder
+                        border.width: 1
+
+                        Behavior on color { ColorAnimation { duration: shellConfig.durationOut } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: ""
+                            color: mouseChassis.rightPressed ? shellConfig.themeBackground : fc.textPrimary
+                            font.bold: true
+                            font.pixelSize: 11
+                            font.family: fc.mainFont
+                        }
+                    }
+
+                    // Interactive Reactive Scroll Wheel Block
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: (parent.height * 0.45) - (height / 2)
+                        width: 12; height: 26
+                        radius: 5
+                        color: mouseChassis.middlePressed ? shellConfig.themeText : shellConfig.colorBorder
+                        border.color: mouseChassis.middlePressed ? shellConfig.themeText : shellConfig.colorBorder
+                        border.width: 1
+
+                        Behavior on color { ColorAnimation { duration: shellConfig.durationOut } }
+                    }
+                }
+
+                // Explicit bracket wrapping for calculation matrix properties prevents parsing faults
+                transform: Matrix4x4 {
+                    matrix: {
+                        let m = Qt.matrix4x4();
+                        m.m12 = -0.25;
+                        return m;
+                    }
+                }
             }
         }
     }
