@@ -23,6 +23,7 @@ Item {
     property bool isHovered: globalTrackingArea.containsMouse || contentHoverHandler.hovered
 
     property var rootWindow: Quickshell.window
+    property var resolvedIconPaths: ({})
 
     // --- SYSTEM THEME MATRIX ---
     property color colorBackground: shellConfig.colorBackground
@@ -72,29 +73,70 @@ Item {
         repeat: false
         onTriggered: {
             if (previewRoot.targetWorkspace !== -1) {
-                // Fix: Actively poll IPC state updates so layout variables bound to collections evaluate properly
                 Hyprland.refreshToplevels();
                 Hyprland.refreshWorkspaces();
                 
                 previewRoot.workingWorkspace = previewRoot.targetWorkspace;
                 previewRoot.active = true;
+                iconFinderProcess.running = true;
             }
         }
     }
 
-    function getCleanIconName(className) {
-        if (!className) return "application-x-executable";
-        let scrubbed = className.replace("image://icon/", "").toLowerCase().trim();
+    // Purely generic Python filesystem search matching your workspace overview and AppLauncher logic
+    Process {
+        id: iconFinderProcess
+        running: false
+        command: {
+            let classes = [];
+            let windows = viewportFrame.workspaceWindows;
+            for (let i = 0; i < windows.length; i++) {
+                let cls = windows[i].lastIpcObject ? windows[i].lastIpcObject.class : "";
+                if (cls && !classes.includes(cls)) classes.push(cls);
+            }
+            return ["python", "-c", `
+import os, sys, json
+
+class_list = json.loads(sys.argv[1])
+icon_dirs = [
+    os.path.expanduser("~/.local/share/icons"),
+    "/usr/share/icons/hicolor",
+    "/usr/share/icons/Papirus",
+    "/usr/share/icons",
+    "/usr/share/pixmaps"
+]
+
+resolved_map = {}
+
+for cl in class_list:
+    scrubbed = cl.replace("image://icon/", "").lower().strip()
+    if "." in scrubbed:
+        scrubbed = scrubbed.split(".")[-1]
         
-        if (scrubbed.includes("remmina")) return "remmina";
-        if (scrubbed.includes("chrome")) return "google-chrome";
-        if (scrubbed.includes("kitty")) return "kitty";
-        if (scrubbed.includes("terminal")) return "utilities-terminal";
-        if (scrubbed.includes("codium")) return "vscodium";
-        if (scrubbed.includes("code")) return "vscode";
-        if (scrubbed.includes("signal")) return "signal-desktop";
-        
-        return scrubbed;
+    found = False
+    for base in icon_dirs:
+        if found: break
+        if not os.path.isdir(base): continue
+        for root, dirs, files in os.walk(base):
+            for ext in [".svg", ".png", ".xpm"]:
+                p = os.path.join(root, scrubbed + ext)
+                if os.path.isfile(p):
+                    resolved_map[cl] = "file://" + p
+                    found = True
+                    break
+            if found: break
+print(json.dumps(resolved_map))
+`, JSON.stringify(classes)]
+        }
+        stdout: StdioCollector {
+            onTextChanged: {
+                let cleanText = text.trim();
+                if (!cleanText || cleanText === "{}") return;
+                try {
+                    previewRoot.resolvedIconPaths = JSON.parse(cleanText);
+                } catch(e) {}
+            }
+        }
     }
 
     Item {
@@ -257,8 +299,12 @@ Item {
                             Repeater {
                                 model: viewportFrame.workspaceWindows
                                 delegate: Image {
-                                    visible: modelData.lastIpcObject && (modelData.lastIpcObject.class || "") !== ""
-                                    source: Quickshell.iconPath(getCleanIconName(modelData.lastIpcObject ? modelData.lastIpcObject.class : ""))
+                                    property string currentClass: modelData.lastIpcObject ? modelData.lastIpcObject.class : ""
+                                    property string resolvedPath: previewRoot.resolvedIconPaths[currentClass] || ""
+                                    
+                                    visible: modelData.lastIpcObject && currentClass !== "" && resolvedPath !== ""
+                                    source: resolvedPath
+                                    
                                     Layout.preferredWidth: 16
                                     Layout.preferredHeight: 16
                                     Layout.alignment: Qt.AlignVCenter

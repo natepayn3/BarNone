@@ -28,6 +28,7 @@ PanelWindow {
 
     // --- INTERNAL STATES & PROCESS FORK ENGINE ---
     property var liveClientJson: []
+    property var resolvedIconPaths: ({})
 
     onVisibleChanged: {
         if (visible) {
@@ -79,6 +80,62 @@ PanelWindow {
                 if (!cleanText || cleanText === "[]") return;
                 try { 
                     overviewWindow.liveClientJson = JSON.parse(cleanText);
+                    iconFinderProcess.running = true;
+                } catch(e) {}
+            }
+        }
+    }
+
+    // Purely generic Python filesystem search matching AppLauncher.qml lookup structures exactly
+    Process {
+        id: iconFinderProcess
+        running: false
+        command: {
+            let classes = [];
+            for (let i = 0; i < overviewWindow.liveClientJson.length; i++) {
+                let cls = overviewWindow.liveClientJson[i].class;
+                if (cls && !classes.includes(cls)) classes.push(cls);
+            }
+            return ["python", "-c", `
+import os, sys, json
+
+class_list = json.loads(sys.argv[1])
+icon_dirs = [
+    os.path.expanduser("~/.local/share/icons"),
+    "/usr/share/icons/hicolor",
+    "/usr/share/icons/Papirus",
+    "/usr/share/icons",
+    "/usr/share/pixmaps"
+]
+
+resolved_map = {}
+
+for cl in class_list:
+    scrubbed = cl.replace("image://icon/", "").lower().strip()
+    if "." in scrubbed:
+        scrubbed = scrubbed.split(".")[-1]
+        
+    found = False
+    for base in icon_dirs:
+        if found: break
+        if not os.path.isdir(base): continue
+        for root, dirs, files in os.walk(base):
+            for ext in [".svg", ".png", ".xpm"]:
+                p = os.path.join(root, scrubbed + ext)
+                if os.path.isfile(p):
+                    resolved_map[cl] = "file://" + p
+                    found = True
+                    break
+            if found: break
+print(json.dumps(resolved_map))
+`, JSON.stringify(classes)]
+        }
+        stdout: StdioCollector {
+            onTextChanged: {
+                let cleanText = text.trim();
+                if (!cleanText || cleanText === "{}") return;
+                try {
+                    overviewWindow.resolvedIconPaths = JSON.parse(cleanText);
                 } catch(e) {}
             }
         }
@@ -94,22 +151,6 @@ PanelWindow {
                  clientQueryProcess.running = true;
              }
         }
-    }
-
-    function getCleanIconName(className) {
-        if (!className) return "application-x-executable";
-        
-        let scrubbed = className.replace("image://icon/", "").toLowerCase().trim();
-        
-        if (scrubbed.includes("remmina")) return "remmina";
-        if (scrubbed.includes("chrome")) return "google-chrome";
-        if (scrubbed.includes("kitty")) return "kitty";
-        if (scrubbed.includes("terminal")) return "utilities-terminal";
-        if (scrubbed.includes("codium")) return "vscodium";
-        if (scrubbed.includes("code")) return "vscode";
-        if (scrubbed.includes("signal")) return "signal-desktop";
-        
-        return scrubbed;
     }
 
     Item {
@@ -179,7 +220,6 @@ PanelWindow {
                     return chunks;
                 }
 
-                // Standard Row forces horizontal positioning without cell/column sizing constraints
                 delegate: Row {
                     id: rowContainer
                     Layout.alignment: Qt.AlignHCenter
@@ -217,7 +257,6 @@ PanelWindow {
                                 scale: tileWrapper.targetScale
                                 Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-                                // --- TV ANTENNA ICON ---
                                 Text {
                                     id: antennaIcon
                                     text: "network_ping"
@@ -238,7 +277,6 @@ PanelWindow {
                                     anchors.fill: parent
                                     anchors.margins: 14
 
-                                    // --- TV KNOBS (INSIDE WINDOW, LEFT SIDE) ---
                                     Column {
                                         id: tvKnobsColumn
                                         anchors.left: parent.left
@@ -277,7 +315,6 @@ PanelWindow {
                                         }
                                     }
 
-                                    // --- HEADER ROW (TITLE + RUNNING APPS) ---
                                     RowLayout {
                                         id: headerRow
                                         width: parent.width - tvKnobsColumn.width - 16
@@ -321,8 +358,10 @@ PanelWindow {
                                                 Repeater {
                                                     model: viewportFrame.workspaceWindows
                                                     delegate: Image {
-                                                        visible: (modelData.class || "") !== "" && modelData.mapped
-                                                        source: Quickshell.iconPath(getCleanIconName(modelData.class))
+                                                        // Prevent the Image from loading if a valid disk path wasn't mapped yet
+                                                        property string resolvedPath: overviewWindow.resolvedIconPaths[modelData.class] || ""
+                                                        visible: (modelData.class || "") !== "" && modelData.mapped && resolvedPath !== ""
+                                                        source: resolvedPath
                                                         
                                                         Layout.preferredWidth: tileWrapper.isTargetActive ? 20 : 16
                                                         Layout.preferredHeight: tileWrapper.isTargetActive ? 20 : 16
@@ -351,10 +390,8 @@ PanelWindow {
                                         anchors.leftMargin: 16
                                     }
 
-                                    // --- VIEWPORT STREAM ENGINE ---
                                     Rectangle {
                                         id: viewportFrame
-                                        
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         anchors.horizontalCenterOffset: (tvKnobsColumn.width + 20) / 2
                                         anchors.top: headerDivider.bottom
@@ -364,7 +401,6 @@ PanelWindow {
                                         color: "transparent"
                                         radius: 4
                                         clip: true
-                                        
                                         z: 10 
 
                                         property var workspaceWindows: overviewWindow.liveClientJson.filter(w => w.workspace.id === tileWrapper.workingWorkspace)
