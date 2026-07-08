@@ -78,7 +78,6 @@ Item {
                 
                 previewRoot.workingWorkspace = previewRoot.targetWorkspace;
                 previewRoot.active = true;
-                iconFinderProcess.running = true;
             }
         }
     }
@@ -89,44 +88,53 @@ Item {
         running: false
         command: {
             let classes = [];
-            let windows = viewportFrame.workspaceWindows;
-            for (let i = 0; i < windows.length; i++) {
-                let cls = windows[i].lastIpcObject ? windows[i].lastIpcObject.class : "";
-                if (cls && !classes.includes(cls)) classes.push(cls);
+            let windows = viewportFrame ? viewportFrame.workspaceWindows : [];
+            if (windows) {
+                for (let i = 0; i < windows.length; i++) {
+                    let cls = (windows[i] && windows[i].lastIpcObject) ? windows[i].lastIpcObject.class : "";
+                    if (cls && !classes.includes(cls)) classes.push(cls);
+                }
             }
             return ["python", "-c", `
-import os, sys, json
+    import os, sys, json
 
-class_list = json.loads(sys.argv[1])
-icon_dirs = [
-    os.path.expanduser("~/.local/share/icons"),
-    "/usr/share/icons/hicolor",
-    "/usr/share/icons/Papirus",
-    "/usr/share/icons",
-    "/usr/share/pixmaps"
-]
+    class_list = json.loads(sys.argv[1])
+    icon_dirs = [
+        os.path.expanduser("~/.local/share/icons"),
+        "/usr/share/icons/hicolor",
+        "/usr/share/icons/Papirus",
+        "/usr/share/icons",
+        "/usr/share/pixmaps"
+    ]
 
-resolved_map = {}
+    resolved_map = {}
 
-for cl in class_list:
-    scrubbed = cl.replace("image://icon/", "").lower().strip()
-    if "." in scrubbed:
-        scrubbed = scrubbed.split(".")[-1]
-        
-    found = False
-    for base in icon_dirs:
-        if found: break
-        if not os.path.isdir(base): continue
-        for root, dirs, files in os.walk(base):
-            for ext in [".svg", ".png", ".xpm"]:
-                p = os.path.join(root, scrubbed + ext)
-                if os.path.isfile(p):
-                    resolved_map[cl] = "file://" + p
+    for cl in class_list:
+        scrubbed = cl.replace("image://icon/", "").lower().strip()
+        if "." in scrubbed:
+            scrubbed = scrubbed.split(".")[-1]
+            
+        found = False
+        for base in icon_dirs:
+            if found: break
+            if not os.path.isdir(base): continue
+            
+            # Check standard direct lookup sizes instead of calling deep os.walk tree loops
+            paths_to_check = [
+                os.path.join(base, "Papirus/32x32/apps", scrubbed + ".svg"),
+                os.path.join(base, "Papirus/32x32/apps", scrubbed + "-desktop.svg"),
+                os.path.join(base, "hicolor/32x32/apps", scrubbed + ".png"),
+                os.path.join(base, scrubbed + ".png")
+            ]
+            
+            for path in paths_to_check:
+                if os.path.isfile(path):
+                    resolved_map[cl] = "file://" + path
                     found = True
                     break
-            if found: break
-print(json.dumps(resolved_map))
-`, JSON.stringify(classes)]
+                    
+    print(json.dumps(resolved_map))
+    `, JSON.stringify(classes)]
         }
         stdout: StdioCollector {
             onTextChanged: {
@@ -137,6 +145,14 @@ print(json.dumps(resolved_map))
                 } catch(e) {}
             }
         }
+    }
+
+    // Declarative process runner tracking window list populations
+    Binding {
+        target: iconFinderProcess
+        property: "running"
+        value: viewportFrame && viewportFrame.workspaceWindows && viewportFrame.workspaceWindows.length > 0
+        when: previewRoot.active
     }
 
     Item {
@@ -295,7 +311,7 @@ print(json.dumps(resolved_map))
                             height: parent.height
                             spacing: 8
                             anchors.verticalCenter: parent.verticalCenter
-
+                        
                             Repeater {
                                 model: viewportFrame.workspaceWindows
                                 delegate: Image {
