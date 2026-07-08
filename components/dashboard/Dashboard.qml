@@ -329,7 +329,7 @@ PanelWindow {
 
                     HoverHandler { id: processPanelHover }
 
-                    // Decoupled container replaces ColumnLayout to stop rigid layout snapping
+                    // Inline Comment: Decoupled container stops rigid layout snapping during width scaling
                     Item {
                         width: 234
                         height: parent.height
@@ -337,7 +337,6 @@ PanelWindow {
                         opacity: resourceRingsComp.listActive ? 1.0 : 0.0
                         Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
-                        // 1. Header Section anchored cleanly to the top
                         RowLayout {
                             id: processHeader
                             width: parent.width
@@ -380,7 +379,6 @@ PanelWindow {
                             }
                         }
 
-                        // 2. Process List floating fluidly between header and footer
                         ListView {
                             id: processListView
                             width: parent.width
@@ -394,24 +392,25 @@ PanelWindow {
                             boundsBehavior: Flickable.StopAtBounds
                             ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
+                            // Inline Comment: Smoothly fade in items completely avoiding coordinate thrashing
                             populate: Transition {
-                            NumberAnimation { 
-                                property: "opacity"
-                                from: 0.0
-                                to: 1.0
-                                duration: 400 
-                                easing.type: Easing.OutCubic 
+                                NumberAnimation { 
+                                    property: "opacity"
+                                    from: 0.0
+                                    to: 1.0
+                                    duration: 400 
+                                    easing.type: Easing.OutCubic 
+                                }
                             }
-                        }
-
-                        add: Transition {
-                            NumberAnimation { 
-                                property: "opacity"
-                                from: 0.0
-                                to: 1.0
-                                duration: 250 
+                            
+                            add: Transition {
+                                NumberAnimation { 
+                                    property: "opacity"
+                                    from: 0.0
+                                    to: 1.0
+                                    duration: 250 
+                                }
                             }
-                        }
 
                             section.property: "category"
                             section.delegate: Column {
@@ -497,7 +496,6 @@ PanelWindow {
                             }
                         }
 
-                        // 3. Disk Progress Section anchored to the bottom
                         Column {
                             id: diskSpaceFooter
                             width: parent.width

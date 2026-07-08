@@ -28,6 +28,7 @@ Item {
         id: globalProcessModel
     }
 
+    // Inline Comment: Instantly purge stale rows on collapse so they don't pop up on next expand
     onListActiveChanged: {
         if (!listActive) {
             globalProcessModel.clear();
@@ -55,7 +56,7 @@ Item {
         }
     }
 
-    // Inline Comment: Master hitbox restored to original functional state, but with staggered execution
+    // Inline Comment: Master hitbox handles instant geometry activation, then staggers data fetching
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -109,14 +110,15 @@ Item {
     component StatRingItem : Item {
         id: ringRow
         width: 84  
-        height: 84 
+        height: 84
 
         property string label: ""
         property real value: 0.0
 
+        // Performance Optimization & Sharpness Fix
         layer.enabled: true
         layer.smooth: true
-        layer.samples: 4 
+        layer.samples: 4
         layer.textureSize: Qt.size(width * Screen.devicePixelRatio, height * Screen.devicePixelRatio)
 
         Shape {
@@ -125,21 +127,21 @@ Item {
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: fc.trackBackground
-                strokeWidth: 3.5 
+                strokeWidth: 3.5
                 PathAngleArc { 
-                    centerX: 42; centerY: 42; radiusX: 37; radiusY: 37 
-                    startAngle: -90; sweepAngle: 360 
+                    centerX: 42; centerY: 42; radiusX: 37; radiusY: 37
+                    startAngle: -90; sweepAngle: 360
                 }
             }
 
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: shellConfig.themeText
-                strokeWidth: 3.5 
+                strokeWidth: 3.5
                 capStyle: ShapePath.RoundCap
                 PathAngleArc { 
-                    centerX: 42; centerY: 42; radiusX: 37; radiusY: 37 
-                    startAngle: -90; sweepAngle: Math.max(0.1, ringRow.value * 360) 
+                    centerX: 42; centerY: 42; radiusX: 37; radiusY: 37
+                    startAngle: -90; sweepAngle: Math.max(0.1, ringRow.value * 360)
                 }
             }
         }
@@ -152,7 +154,7 @@ Item {
                 text: ringRow.label
                 color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                 font.family: fc.mainFont
-                font.pixelSize: 10 
+                font.pixelSize: 10
                 font.weight: Font.Bold
                 anchors.horizontalCenter: parent.horizontalCenter
                 Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
@@ -161,7 +163,7 @@ Item {
                 text: Math.round(ringRow.value * 100) + "%"
                 color: shellConfig.themeText
                 font.family: fc.mainFont
-                font.pixelSize: 12 
+                font.pixelSize: 12
                 font.weight: Font.DemiBold
                 anchors.horizontalCenter: parent.horizontalCenter
                 Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
