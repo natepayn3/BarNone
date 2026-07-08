@@ -295,14 +295,14 @@ print(json.dumps(resolved_map))
                             height: parent.height
                             spacing: 8
                             anchors.verticalCenter: parent.verticalCenter
-                        
+
                             Repeater {
                                 model: viewportFrame.workspaceWindows
                                 delegate: Image {
-                                    property string currentClass: modelData.lastIpcObject ? modelData.lastIpcObject.class : ""
-                                    property string resolvedPath: previewRoot.resolvedIconPaths[currentClass] || ""
+                                    property string currentClass: (modelData && modelData.lastIpcObject) ? (modelData.lastIpcObject.class || "") : ""
+                                    property string resolvedPath: (currentClass !== "" && previewRoot.resolvedIconPaths) ? (previewRoot.resolvedIconPaths[currentClass] || "") : ""
                                     
-                                    visible: modelData.lastIpcObject && currentClass !== "" && resolvedPath !== ""
+                                    visible: modelData && modelData.lastIpcObject && currentClass !== "" && resolvedPath !== ""
                                     source: resolvedPath
                                     
                                     Layout.preferredWidth: 16
