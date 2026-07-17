@@ -559,8 +559,15 @@ PanelWindow {
                                             pathFadeAnimation.start();
                                         } else {
                                             let urlString = fileUrl.toString();
+                                            // Correctly strip the file:// prefix
                                             let parsedPath = urlString.startsWith("file:///") ? urlString.substring(7) : urlString.replace("file://", "");
-                                            vpnImporter.command = ["bash", "-c", "nmcli connection import file '" + parsedPath + "' || echo 'QS_IMPORT_FAILED' >&2"];
+                                            
+                                            // Determine type based on extension (wireguard for .conf, openvpn for .ovpn)
+                                            let isWg = parsedPath.endsWith(".conf");
+                                            let typeStr = isWg ? "wireguard" : "openvpn";
+
+                                            // Execute natively using fish without the broken 'file' keyword syntax
+                                            vpnImporter.command = ["fish", "-c", `nmcli connection import type ${typeStr} file "${parsedPath}"`];
                                             vpnImporter.running = true;
                                             networkPopupWindow.showFileBrowser = false;
                                         }
@@ -628,7 +635,16 @@ PanelWindow {
     }
 
     Process { id: vpnStateExecutor; running: false; onExited: vpnListPopulator.running = true }
-    Process { id: vpnImporter; running: false; onExited: vpnListPopulator.running = true }
+    Process { 
+        id: vpnImporter 
+        running: false 
+        onExited: vpnListPopulator.running = true 
+        
+        // Bind stderr to catch failures
+        stderr: StdioCollector {
+            onTextChanged: if (text.trim()) console.warn("VPN Import Error: " + text.trim())
+        }
+    }
 
     Process {
         id: vpnNotificationProc
